@@ -51,6 +51,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(localStorage.getItem('is_admin') === 'true');
+  const [logoError, setLogoError] = useState(false);
   const isRtl = i18n.language === 'ar';
 
   useEffect(() => {
@@ -120,7 +121,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <aside className="hidden md:flex flex-col w-64 bg-white border-e border-slate-200 p-4 sticky top-0 h-screen">
         <div className="flex items-center gap-2 px-2 mb-8">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-100">
-            <img src={`${window.location.origin}/logo.png`} alt="Roeya Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+            {!logoError ? (
+              <img 
+                src="/logo.png" 
+                alt="Roeya Logo" 
+                className="w-full h-full object-contain" 
+                referrerPolicy="no-referrer"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <div className="text-primary font-bold text-xl">R</div>
+            )}
           </div>
           <div>
             <h1 className="font-bold text-xl text-primary leading-tight">{t('app_name')}</h1>
@@ -161,7 +172,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-100">
-              <img src={`${window.location.origin}/logo.png`} alt="Roeya Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+              {!logoError ? (
+                <img 
+                  src="/logo.png" 
+                  alt="Roeya Logo" 
+                  className="w-full h-full object-contain" 
+                  referrerPolicy="no-referrer"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <div className="text-primary font-bold text-lg">R</div>
+              )}
             </div>
             <h1 className="font-bold text-lg text-primary">{t('app_name')}</h1>
           </div>

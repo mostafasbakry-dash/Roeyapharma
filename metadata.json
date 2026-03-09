@@ -1,0 +1,7 @@
+{
+  "name": "Remix: Roeya - رؤية: Professional Dead-Stock Exchange",
+  "description": "A professional platform for pharmacies in Egypt to exchange dead-stock medications, featuring smart search, bilingual support, and automated matching.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

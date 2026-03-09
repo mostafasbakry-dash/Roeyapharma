@@ -60,7 +60,7 @@ const ProtectedRouteAdmin = ({ children }: { children: React.ReactNode }) => {
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') {
-        console.error('Admin check error:', error);
+        // Silent fail
       }
 
       if (!data) {

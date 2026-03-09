@@ -58,7 +58,7 @@ export const Profile = () => {
           .maybeSingle();
 
         if (pharmacyError && pharmacyError.code !== 'PGRST116') {
-          console.error('Pharmacy fetch error:', pharmacyError);
+          // Silent fail
         }
 
         if (pharmacyData) {
@@ -82,7 +82,7 @@ export const Profile = () => {
           .eq('pharmacy_id', current_user_id);
 
         if (archiveError && archiveError.code !== 'PGRST116') {
-          console.error('Archive fetch error:', archiveError);
+          // Silent fail
         }
 
         // Fetch Ratings
@@ -92,7 +92,7 @@ export const Profile = () => {
           .eq('to_pharmacy_id', current_user_id);
 
         if (ratingsError && ratingsError.code !== 'PGRST116') {
-          console.error('Ratings fetch error:', ratingsError);
+          // Silent fail
         }
 
         const avgRating = ratings && ratings.length > 0
@@ -106,7 +106,7 @@ export const Profile = () => {
         });
       } catch (err: any) {
         if (err?.code !== 'PGRST116' && err?.status !== 406) {
-          console.error('Error fetching profile data:', err);
+          // Silent fail
         }
       } finally {
         setIsInitialLoading(false);
@@ -118,7 +118,6 @@ export const Profile = () => {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Update Profile form submitted', profile);
     setLoading(true);
     try {
       const current_user_id_str = localStorage.getItem('pharmacy_id');
@@ -140,7 +139,7 @@ export const Profile = () => {
           .eq('pharmacy_id', current_user_id);
 
         if (supabaseError) {
-          console.error('Supabase Profile Update Error:', supabaseError);
+          // Silent fail
         }
       }
 
@@ -167,7 +166,6 @@ export const Profile = () => {
       window.dispatchEvent(new Event('profileUpdated'));
       toast.success('Profile updated successfully!');
     } catch (err: any) {
-      console.error('EXACT Profile Update Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -206,7 +204,6 @@ export const Profile = () => {
         .getPublicUrl(filePath);
 
       // 3. Update Database
-      console.log('Updating pharmacy record with new avatar URL:', publicUrl);
       const { error: updateError } = await supabase
         .from('pharmacies')
         .update({ 
@@ -216,11 +213,8 @@ export const Profile = () => {
         .eq('pharmacy_id', current_user_id);
 
       if (updateError) {
-        console.error('Database Update Error:', updateError);
         throw updateError;
       }
-
-      console.log('Pharmacy record updated successfully in database');
 
       // 4. Update Local State
       const updatedProfile = { ...profile, avatar_url: publicUrl };
@@ -230,7 +224,6 @@ export const Profile = () => {
       
       toast.success('Profile picture updated!');
     } catch (err: any) {
-      console.error('Upload Error:', err);
       toast.error('Failed to upload image');
     } finally {
       setLoading(false);

@@ -46,7 +46,6 @@ export const MyOffers = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching from inventory_offers...');
       const supabase = getSupabase();
       if (!supabase) return;
 
@@ -57,12 +56,10 @@ export const MyOffers = () => {
         .order('created_at', { ascending: false });
 
       if (fetchError) {
-        console.error('MyOffers Fetch Error:', fetchError.message, fetchError.details, fetchError.hint);
+        // Silent fail
       }
-      console.log('MyOffers Fetch Success:', data?.length, 'items');
       setOffers(data || []);
     } catch (err) {
-      console.error('Fetch Offers Error:', err);
       setError(err);
       toast.error(t('error_generic'));
     } finally {
@@ -76,7 +73,6 @@ export const MyOffers = () => {
 
   const handleAddOffer = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Add Offer form submitted', formData, selectedDrug);
     if (!selectedDrug) return;
 
     // Check for duplicates (Barcode + Expiry)
@@ -152,13 +148,11 @@ export const MyOffers = () => {
         }]);
 
       if (archiveError) {
-        console.error('Archive Error:', archiveError);
         toast.error('Failed to archive record: ' + archiveError.message);
         return false;
       }
       return true;
     } catch (err) {
-      console.error('Archive Exception:', err);
       toast.error('Failed to archive record');
       return false;
     }
@@ -201,6 +195,9 @@ export const MyOffers = () => {
       const supabase = getSupabase();
       if (!supabase) return;
 
+      // Archive as Cancelled before deleting to prevent incorrect activity records
+      await archiveItem(selectedOffer, selectedOffer.quantity, isRtl ? 'ملغي' : 'Cancelled');
+
       const { error: deleteError } = await supabase
         .from('inventory_offers')
         .delete()
@@ -208,12 +205,11 @@ export const MyOffers = () => {
 
       if (deleteError) throw deleteError;
 
-      toast.success('تم حذف العرض بنجاح');
+      toast.success(isRtl ? 'تم حذف العرض بنجاح' : 'Offer deleted successfully');
       setShowCancelModal(false);
       setSelectedOffer(null);
       fetchOffers();
     } catch (err) {
-      console.error('Delete Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -311,7 +307,6 @@ export const MyOffers = () => {
         </div>
         <button
           onClick={() => {
-            console.log('Open Add Offer Modal clicked');
             const pid = localStorage.getItem('pharmacy_id');
             if (!pid) {
               toast.error('Please complete your pharmacy profile first to start adding items');
@@ -428,7 +423,6 @@ export const MyOffers = () => {
               <h2 className="text-xl font-bold">{t('add_offer')}</h2>
               <button 
                 onClick={() => {
-                  console.log('Close Add Offer Modal clicked');
                   setShowAddModal(false);
                 }} 
                 className="hover:bg-white/20 p-1 rounded-lg"
@@ -630,6 +624,12 @@ export const MyOffers = () => {
                   {t('archive_transfer')}
                 </button>
               </div>
+              <button
+                onClick={() => handleFullCancel(isRtl ? 'ملغي' : 'Cancelled')}
+                className="py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-slate-500/20"
+              >
+                {isRtl ? 'إلغاء العرض (أرشفة كملغي)' : 'Cancel Offer (Archive as Cancelled)'}
+              </button>
               <button
                 onClick={handleDirectDelete}
                 className="py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-500/20"

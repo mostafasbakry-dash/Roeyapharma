@@ -94,7 +94,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const menuItems = isAdmin ? adminMenuItems : pharmacyMenuItems;
 
   const toggleLanguage = () => {
-    console.log('Toggle Language clicked');
     const newLang = i18n.language === 'ar' ? 'en' : 'ar';
     i18n.changeLanguage(newLang);
     document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
@@ -107,7 +106,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [isRtl, i18n.language]);
 
   const handleLogout = () => {
-    console.log('Logout clicked');
     localStorage.removeItem('pharmacy_id');
     localStorage.removeItem('user_credentials');
     localStorage.removeItem('is_admin');
@@ -122,7 +120,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <aside className="hidden md:flex flex-col w-64 bg-white border-e border-slate-200 p-4 sticky top-0 h-screen">
         <div className="flex items-center gap-2 px-2 mb-8">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-slate-100">
-            <img src="/logo.png" alt="Roeya Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+            <img src={`${window.location.origin}/logo.png`} alt="Roeya Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
           </div>
           <div>
             <h1 className="font-bold text-xl text-primary leading-tight">{t('app_name')}</h1>
@@ -163,13 +161,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-100">
-              <img src="/logo.png" alt="Roeya Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+              <img src={`${window.location.origin}/logo.png`} alt="Roeya Logo" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
             </div>
             <h1 className="font-bold text-lg text-primary">{t('app_name')}</h1>
           </div>
           <button
             onClick={() => {
-              console.log('Mobile Menu Toggle clicked');
               setIsMobileMenuOpen(!isMobileMenuOpen);
             }}
             className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
@@ -189,7 +186,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   key={item.to}
                   to={item.to}
                   onClick={() => {
-                    console.log(`Mobile Menu Link clicked: ${item.to}`);
                     setIsMobileMenuOpen(false);
                   }}
                   className={cn(

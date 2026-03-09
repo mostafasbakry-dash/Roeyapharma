@@ -40,7 +40,6 @@ export const MyRequests = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching from inventory_requests...');
       const supabase = getSupabase();
       if (!supabase) return;
 
@@ -51,12 +50,10 @@ export const MyRequests = () => {
         .order('created_at', { ascending: false });
 
       if (fetchError) {
-        console.error('MyRequests Fetch Error:', fetchError.message, fetchError.details, fetchError.hint);
+        // Silent fail
       }
-      console.log('MyRequests Fetch Success:', data?.length, 'items');
       setRequests(data || []);
     } catch (err) {
-      console.error('Fetch Requests Error:', err);
       setError(err);
       toast.error(t('error_generic'));
     } finally {
@@ -70,7 +67,6 @@ export const MyRequests = () => {
 
   const handleAddRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Add Request form submitted', { selectedDrug, quantity });
     if (!selectedDrug) return;
 
     setLoading(true);
@@ -136,13 +132,11 @@ export const MyRequests = () => {
         }]);
 
       if (archiveError) {
-        console.error('Archive Error:', archiveError);
         toast.error('Failed to archive record: ' + archiveError.message);
         return false;
       }
       return true;
     } catch (err) {
-      console.error('Archive Exception:', err);
       toast.error('Failed to archive record');
       return false;
     }
@@ -263,7 +257,6 @@ export const MyRequests = () => {
         </div>
         <button
           onClick={() => {
-            console.log('Open Add Request Modal clicked');
             const pid = localStorage.getItem('pharmacy_id');
             if (!pid) {
               toast.error('Please complete your pharmacy profile first to start adding items');
@@ -359,7 +352,6 @@ export const MyRequests = () => {
               <h2 className="text-xl font-bold">{t('add_request')}</h2>
               <button 
                 onClick={() => {
-                  console.log('Close Add Request Modal clicked');
                   setShowAddModal(false);
                 }} 
                 className="hover:bg-white/20 p-1 rounded-lg"

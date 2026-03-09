@@ -15,7 +15,6 @@ export const Settings = () => {
   const [loading, setLoading] = useState(false);
 
   const toggleLanguage = () => {
-    console.log('Toggle Language clicked');
     const newLang = i18n.language === 'ar' ? 'en' : 'ar';
     i18n.changeLanguage(newLang);
     document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
@@ -53,7 +52,6 @@ export const Settings = () => {
       toast.success(i18n.language === 'ar' ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully');
       setPasswordData({ newPassword: '', confirmPassword: '' });
     } catch (err: any) {
-      console.error('Password Change Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -171,7 +169,6 @@ export const Settings = () => {
               </div>
             </button>
             <button 
-              onClick={() => console.log('Help Center clicked')}
               className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors text-start"
             >
               <div className="flex items-center gap-4">
@@ -185,7 +182,6 @@ export const Settings = () => {
               </div>
             </button>
             <button 
-              onClick={() => console.log('About Roeya clicked')}
               className="w-full p-6 flex items-center justify-between hover:bg-slate-50 transition-colors text-start"
             >
               <div className="flex items-center gap-4">

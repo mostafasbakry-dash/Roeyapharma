@@ -21,7 +21,6 @@ export const Login = () => {
     }
     localStorage.clear();
     sessionStorage.clear();
-    console.log('Session cleared before login attempt');
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -44,7 +43,6 @@ export const Login = () => {
     try {
       // --- ADMIN PATH ---
       if (normalizedEmail === ADMIN_EMAIL) {
-        console.log('Admin path detected');
         let { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: normalizedEmail,
           password: credentials.password
@@ -52,7 +50,6 @@ export const Login = () => {
 
         // Forced Login Fallback for Admin
         if (authError) {
-          console.log('Attempting forced login with updated password...');
           const forcedResult = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
             password: '2011988REEmy@'
@@ -89,7 +86,6 @@ export const Login = () => {
       }
 
       // --- PHARMACY PATH ---
-      console.log('Pharmacy path detected');
       
       // 1. Check custom credentials table directly
       const { data: credentialData, error: credentialError } = await supabase
@@ -99,7 +95,7 @@ export const Login = () => {
         .maybeSingle();
 
       if (credentialError && credentialError.code !== 'PGRST116') {
-        console.error('Credential fetch error:', credentialError);
+        // Silent fail
       }
 
       if (!credentialData) {
@@ -123,7 +119,7 @@ export const Login = () => {
         .maybeSingle();
 
       if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Profile fetch error:', profileError);
+        // Silent fail
       }
 
       if (!profileData) {
@@ -157,7 +153,6 @@ export const Login = () => {
       toast.success('Welcome back!');
       navigate('/');
     } catch (err) {
-      console.error('Login error:', err);
       toast.error('An error occurred during login');
     } finally {
       setLoading(false);

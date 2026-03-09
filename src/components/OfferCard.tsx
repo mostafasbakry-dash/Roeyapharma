@@ -133,7 +133,6 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
           {onAction && (
             <button
               onClick={() => {
-                console.log(`Offer Card Action clicked for offer: ${offer.id}`);
                 onAction(offer);
               }}
               className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2"

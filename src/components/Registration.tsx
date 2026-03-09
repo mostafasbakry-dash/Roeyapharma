@@ -38,7 +38,6 @@ export const Registration = () => {
 
   const handleRegisterCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Register Credentials form submitted', credentials);
     setLoading(true);
     try {
       // Generate a unique numeric pharmacy_id based on timestamp
@@ -71,7 +70,6 @@ export const Registration = () => {
       setStep(2);
       toast.success('Account created! Now complete your profile.');
     } catch (err: any) {
-      console.error('EXACT Registration Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -80,7 +78,6 @@ export const Registration = () => {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Save Profile form submitted', profile);
     setLoading(true);
     try {
       const pharmacy_id_str = localStorage.getItem('temp_pharmacy_id');
@@ -117,7 +114,6 @@ export const Registration = () => {
       toast.success('Profile completed successfully!');
       navigate('/');
     } catch (err: any) {
-      console.error('EXACT Profile Save Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);

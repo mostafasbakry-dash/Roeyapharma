@@ -51,7 +51,6 @@ export const Reports = () => {
       if (archiveError) throw archiveError;
       setData(archive || []);
     } catch (err: any) {
-      console.error('Reports Fetch Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);

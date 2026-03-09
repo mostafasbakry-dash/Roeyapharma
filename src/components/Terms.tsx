@@ -32,7 +32,7 @@ export const Terms = () => {
         }
       } catch (err: any) {
         if (err?.code !== 'PGRST116' && err?.status !== 406) {
-          console.error('Error fetching legal content:', err);
+          // Silent fail
         }
         setError(err.message);
         // Fallback content if fetch fails

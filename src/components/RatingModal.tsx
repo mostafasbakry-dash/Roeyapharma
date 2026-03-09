@@ -53,7 +53,6 @@ export const RatingModal = ({
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      console.error('Rating Submit Error:', err);
       // Handle 409 Conflict or Unique Constraint Violation (Postgres code 23505)
       if (err.code === '23505' || err.status === 409) {
         toast.success(i18n.language === 'ar' ? 'تم تسجيل تقييمك بنجاح' : 'Your rating was recorded');

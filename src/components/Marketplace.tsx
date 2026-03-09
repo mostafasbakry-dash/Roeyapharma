@@ -81,7 +81,6 @@ export const Marketplace = () => {
       fetchData();
       
     } catch (err) {
-      console.error('Confirm Transaction Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -102,7 +101,6 @@ export const Marketplace = () => {
     setError(null);
     try {
       const table = viewType === 'offers' ? 'inventory_offers' : 'inventory_requests';
-      console.log(`Fetching from ${table}...`);
       const supabase = getSupabase();
       if (!supabase) return;
 
@@ -112,7 +110,7 @@ export const Marketplace = () => {
         .order('created_at', { ascending: false });
 
       if (fetchError) {
-        console.error(`Marketplace Fetch Error (${table}):`, fetchError.message, fetchError.details, fetchError.hint);
+        // Silent fail
       }
       
       const allItems = data || [];
@@ -161,7 +159,6 @@ export const Marketplace = () => {
       setItems(sorted);
       setFilteredItems(sorted);
     } catch (err) {
-      console.error('Fetch Marketplace Error:', err);
       setError(err);
       toast.error(t('error_generic'));
     } finally {
@@ -235,7 +232,6 @@ export const Marketplace = () => {
           </div>
           <button
             onClick={() => {
-              console.log('Show Filters clicked');
               setShowFilters(!showFilters);
             }}
             className={cn(
@@ -287,7 +283,6 @@ export const Marketplace = () => {
           <div className="flex items-end">
             <button
               onClick={() => {
-                console.log('Reset Filters clicked');
                 setSelectedCity('');
                 setMinDiscount(0);
                 setSearchQuery('');

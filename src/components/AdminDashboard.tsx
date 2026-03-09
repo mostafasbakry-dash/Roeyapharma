@@ -291,14 +291,6 @@ export const AdminDashboard = () => {
       // 2. Sanitize Barcode (ensure no spaces)
       const sanitizedBarcode = item.barcode ? String(item.barcode).replace(/\s/g, '') : null;
 
-      console.log('Approving item with sanitized data:', {
-        arabic_name: item.arabic_name,
-        english_name: item.english_name,
-        brand: item.brand,
-        price: sanitizedPrice,
-        barcode: sanitizedBarcode
-      });
-
       // 3. Insert into master
       const { error: insertError } = await supabase.from('master').insert([{
         arabic_name: item.arabic_name,
@@ -309,21 +301,18 @@ export const AdminDashboard = () => {
       }]);
 
       if (insertError) {
-        console.error('Supabase Master Insert Error Details:', insertError);
         throw insertError;
       }
 
       // 4. Delete from pending_items
       const { error: deleteError } = await supabase.from('pending_items').delete().eq('id', item.id);
       if (deleteError) {
-        console.error('Supabase Pending Delete Error Details:', deleteError);
         throw deleteError;
       }
 
       toast.success('Item approved and added to Master');
       fetchData();
     } catch (err: any) {
-      console.error('Full Approval Error Object:', err);
       toast.error(`Failed to approve item: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);

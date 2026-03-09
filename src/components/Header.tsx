@@ -53,7 +53,7 @@ export const Header = () => {
         });
       }
     } catch (err) {
-      console.error('Error fetching pharmacy data for header:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,6 @@ export const Header = () => {
 
     // Listen for profile updates to refresh header data
     const handleProfileUpdate = () => {
-      console.log('Profile update detected, refreshing header...');
       fetchPharmacyData();
     };
 

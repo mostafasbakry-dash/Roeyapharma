@@ -61,41 +61,24 @@ export const Dashboard = () => {
   const [requestedOffersMatch, setRequestedOffersMatch] = useState<any[]>([]);
   const [availableRequestsMatch, setAvailableRequestsMatch] = useState<any[]>([]);
   const [activeMatchTab, setActiveMatchTab] = useState<'requested' | 'available'>('requested');
-  const [telegramChatId, setTelegramChatId] = useState<string | null>(null);
-  const [hasNotified, setHasNotified] = useState(false);
+  const [telegram, setTelegram] = useState<string | null>(null);
 
   const sendTelegramWebhook = async (chatId: string, message: string) => {
-    if (!chatId) {
-      console.warn('Skipped: telegram field is empty. Cannot send webhook.');
-      return;
-    }
+    if (!chatId) return;
+
     const payload = {
       chat_id: chatId,
       message: message
     };
-    console.log('--- Telegram Webhook Debug ---');
-    console.log('Target URL: https://n8n.srv1168218.hstgr.cloud/webhook/sendtelegram');
-    console.log('Payload:', JSON.stringify(payload, null, 2));
-    console.log('Telegram ID:', chatId);
     
     try {
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/sendtelegram', {
+      await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/sendtelegram', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      
-      const responseData = await response.json().catch(() => ({ 
-        status: response.status, 
-        statusText: response.statusText 
-      }));
-      
-      console.log('Server Response:', responseData);
-      console.log('------------------------------');
-      return responseData;
     } catch (err) {
-      console.error('Telegram Webhook Error:', err);
-      throw err;
+      // Silent error logging for network issues
     }
   };
 
@@ -126,15 +109,15 @@ export const Dashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Fetching stats for pharmacy:', current_user_id);
-      
       // 1. Fetch Offers
       const { data: offers, count: offersCount, error: offersError } = await supabase
         .from('inventory_offers')
         .select('*', { count: 'exact' })
         .eq('pharmacy_id', current_user_id);
 
-      if (offersError) console.error('inventory_offers Error:', offersError);
+      if (offersError) {
+        // Silent fail
+      }
 
       // 2. Fetch Requests
       const { data: requests, count: requestsCount, error: requestsError } = await supabase
@@ -142,7 +125,9 @@ export const Dashboard = () => {
         .select('*', { count: 'exact' })
         .eq('pharmacy_id', current_user_id);
 
-      if (requestsError) console.error('inventory_requests Error:', requestsError);
+      if (requestsError) {
+        // Silent fail
+      }
 
       // 3. Fetch Sales Archive for Sold Items and Success Score
       const { data: archive, count: archiveCount, error: archiveError } = await supabase
@@ -150,7 +135,9 @@ export const Dashboard = () => {
         .select('*', { count: 'exact' })
         .eq('pharmacy_id', current_user_id);
 
-      if (archiveError) console.error('sales_archive Error:', archiveError);
+      if (archiveError) {
+        // Silent fail
+      }
 
       // 4. Fetch Ratings for Cumulative Rating
       const { data: ratings, error: ratingsError } = await supabase
@@ -158,7 +145,9 @@ export const Dashboard = () => {
         .select('stars')
         .eq('to_pharmacy_id', current_user_id);
 
-      if (ratingsError) console.error('ratings Error:', ratingsError);
+      if (ratingsError) {
+        // Silent fail
+      }
 
       // Calculate stats
       const totalOffers = offersCount || 0;
@@ -226,12 +215,21 @@ export const Dashboard = () => {
         .maybeSingle();
       
       if (profileError) {
-        console.error('Profile Fetch Error:', profileError);
-        toast.error(`خطأ في جلب بيانات التليجرام: ${profileError.message}`);
+        // Silent fail
       }
 
       if (profileData) {
-        setTelegramChatId(profileData.telegram);
+        setTelegram(profileData.telegram);
+      } else {
+        // Show one-time toast if telegram is empty
+        const toastKey = `telegram_toast_shown_${current_user_id}`;
+        if (!localStorage.getItem(toastKey)) {
+          toast('يرجى إضافة معرف التليجرام في الإعدادات لتلقي التنبيهات', {
+            icon: '🔔',
+            duration: 5000
+          });
+          localStorage.setItem(toastKey, 'true');
+        }
       }
 
       // 6. Smart Match Logic
@@ -286,7 +284,7 @@ export const Dashboard = () => {
         if (allMatchPairs.length > 0) {
           const chatId = profileData?.telegram;
           if (chatId) {
-            const notifiedMatchesKey = `notified_matches_${current_user_id}`;
+            const notifiedMatchesKey = 'roeya_notified_matches';
             const notifiedMatchesStr = localStorage.getItem(notifiedMatchesKey) || '[]';
             let notifiedMatches: string[] = [];
             try {
@@ -298,18 +296,12 @@ export const Dashboard = () => {
             const newMatches = allMatchPairs.filter(pair => !notifiedMatches.includes(pair));
 
             if (newMatches.length > 0) {
-              console.log('New matches detected!', newMatches.length, 'new pairs. Triggering Telegram webhook for:', chatId);
               sendTelegramWebhook(chatId, 'من خلال رؤية تم العثور على أصناف مطابقة لعروضك أو طلباتك. ادخل الداشبورد دلوقتي وشوفها في قسم أصناف عثر عليها واتواصل مع الصيدليه اللي عارضاها');
               
               // Update notified matches in localStorage
               const updatedNotifiedMatches = Array.from(new Set([...notifiedMatches, ...allMatchPairs]));
               localStorage.setItem(notifiedMatchesKey, JSON.stringify(updatedNotifiedMatches));
-              setHasNotified(true);
-            } else {
-              console.log('Matches detected but all have been notified previously.');
             }
-          } else {
-            console.warn('Match detected but skipped: telegram field is empty in profile');
           }
         }
       }
@@ -327,7 +319,6 @@ export const Dashboard = () => {
 
       setRecentActivity(activity);
     } catch (err) {
-      console.error('Dashboard Stats Error:', err);
       setError(err);
     } finally {
       setLoading(false);

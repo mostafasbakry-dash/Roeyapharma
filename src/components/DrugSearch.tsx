@@ -41,7 +41,6 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
 
       const supabase = getSupabase();
       if (!supabase) {
-        console.error('Supabase client not initialized');
         return;
       }
 
@@ -62,7 +61,6 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
           .or(orFilter)
           .limit(10);
 
-        console.log('Supabase search results:', data);
         if (error) throw error;
 
         // Map the results to our Drug type
@@ -80,7 +78,6 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
         
         // Selection Behavior: If exact barcode match and single result, select automatically
         if (isBarcode && mappedData.length === 1 && mappedData[0].barcode.toString() === query) {
-          console.log(`Exact barcode match found: ${mappedData[0].name_en}`);
           onSelect(mappedData[0]);
           setQuery('');
           setIsOpen(false);
@@ -88,7 +85,7 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
           setIsOpen(true);
         }
       } catch (err) {
-        console.error('Search error:', err);
+        // Silent fail
       } finally {
         setLoading(false);
       }
@@ -121,7 +118,6 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
               <button
                 key={drug.id}
                 onClick={() => {
-                  console.log(`Drug selected from search: ${drug.name_en} (${drug.barcode})`);
                   onSelect(drug);
                   setQuery('');
                   setIsOpen(false);

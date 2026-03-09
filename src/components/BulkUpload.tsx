@@ -77,7 +77,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
   };
 
   const downloadTemplate = () => {
-    console.log('Download Template clicked');
     const template = [
       {
         'Barcode': '6221000000001',
@@ -97,7 +96,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('File Upload triggered');
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -137,7 +135,7 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
           .in('barcode', barcodes);
 
         if (masterError) {
-          console.error('Master bulk check error:', masterError);
+          // Silent fail
         }
 
         const validSet = new Set(masterItems?.map(m => m.barcode?.toString().trim()) || []);
@@ -147,7 +145,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
       setPreviewData(cleanedData);
       toast.success(`Loaded ${cleanedData.length} items. Please review before confirming.`);
     } catch (err: any) {
-      console.error('Upload error:', err);
       toast.error(`Failed to process Excel file: ${err.message}`);
     } finally {
       setLoading(false);
@@ -210,7 +207,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
 
             successCount++;
           } catch (fetchErr: any) {
-            console.error(`Error uploading item ${barcode}:`, fetchErr);
             errorMessages.push(`Failed to upload [${barcode}]: ${fetchErr.message}`);
           }
         } else {
@@ -242,7 +238,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
 
             pendingCount++;
           } catch (fetchErr: any) {
-            console.error(`Error sending item ${barcode} to pending:`, fetchErr);
             errorMessages.push(`Failed to send [${barcode}] to review: ${fetchErr.message}`);
           }
         }
@@ -273,7 +268,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
         toast.error('No items were processed.');
       }
     } catch (err: any) {
-      console.error('Confirm upload error:', err);
       toast.error(`Upload failed: ${err.message}`);
     } finally {
       setLoading(false);

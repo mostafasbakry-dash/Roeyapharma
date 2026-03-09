@@ -64,7 +64,6 @@ export const AddMissingItemModal = ({ onClose, initialQuery }: AddMissingItemMod
         onClose();
       }, 2000);
     } catch (err: any) {
-      console.error('Error adding pending item:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);

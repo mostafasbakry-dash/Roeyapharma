@@ -96,7 +96,8 @@ export const Registration = () => {
             phone: profile.phone.replace(/\D/g, '') ? parseInt(profile.phone.replace(/\D/g, '')) : 0,
             license_no: profile.license_no.replace(/\D/g, '') ? parseInt(profile.license_no.replace(/\D/g, '')) : 0,
             telegram: profile.telegram,
-            email: credentials.email.trim().toLowerCase() // Ensure email is trimmed and lowercase for linkage
+            email: credentials.email.trim().toLowerCase(), // Ensure email is trimmed and lowercase for linkage
+            status: false
           } 
         }),
       });

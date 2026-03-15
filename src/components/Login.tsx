@@ -124,13 +124,11 @@ export const Login = () => {
 
       if (!profileData) {
         console.warn('Profile not found, using credential data');
-        localStorage.setItem('pharmacy_id', credentialData.pharmacy_id.toString());
-        localStorage.setItem('pharmacy_profile', JSON.stringify({
-          id: credentialData.pharmacy_id.toString(),
-          name: 'Pharmacy User',
-          city: 'Cairo',
-          address: ''
-        }));
+        // If profile is missing, we consider it pending/incomplete
+        await supabase.auth.signOut();
+        localStorage.clear();
+        navigate('/activation-pending');
+        return;
       } else {
         // Update last_login
         await supabase
@@ -147,6 +145,14 @@ export const Login = () => {
           phone: profileData.phone,
           telegram: profileData.telegram
         }));
+
+        // 4. Check Status Security Layer
+        if (profileData.status === false) {
+          await supabase.auth.signOut();
+          localStorage.clear();
+          navigate('/activation-pending');
+          return;
+        }
       }
 
       localStorage.removeItem('is_admin'); // Explicitly ensure no admin flag

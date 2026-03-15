@@ -44,6 +44,7 @@ interface Pharmacy {
   city: string;
   address: string;
   account_status: string;
+  status: boolean;
   last_login?: string;
   created_at: string;
 }
@@ -185,7 +186,7 @@ export const AdminDashboard = () => {
       try {
         const { data: pharmacyData } = await supabase
           .from('pharmacies')
-          .select('pharmacy_id, pharmacy_name, phone, city, address, account_status, created_at')
+          .select('pharmacy_id, pharmacy_name, phone, city, address, account_status, status, created_at')
           .order('created_at', { ascending: false });
         setPharmacies(pharmacyData || []);
       } catch (e: any) {
@@ -349,6 +350,20 @@ export const AdminDashboard = () => {
       toast.error('Failed to update pharmacy status');
     } finally {
       setConfirmAction(null);
+    }
+  };
+
+  const handleToggleApproval = async (id: string, currentStatus: boolean) => {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+      const { error } = await supabase.from('pharmacies').update({ status: !currentStatus }).eq('pharmacy_id', id);
+      if (error) throw error;
+      toast.success(`Pharmacy ${!currentStatus ? 'Approved' : 'Deactivated'}`);
+      fetchData();
+    } catch (err) {
+      toast.error('Failed to update approval status');
     }
   };
 
@@ -651,6 +666,16 @@ export const AdminDashboard = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleToggleApproval(pharmacy.pharmacy_id, pharmacy.status)}
+                            className={cn(
+                              "p-2 rounded-lg transition-all",
+                              pharmacy.status ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                            )}
+                            title={pharmacy.status ? "Deactivate" : "Approve"}
+                          >
+                            <CheckCircle size={20} />
+                          </button>
                           <button
                             onClick={() => setConfirmAction({ type: 'blacklist_pharmacy', id: pharmacy.pharmacy_id, data: pharmacy.account_status })}
                             className={cn(

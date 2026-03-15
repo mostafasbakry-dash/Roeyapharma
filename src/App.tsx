@@ -13,6 +13,7 @@ import { Terms } from './components/Terms';
 import { Login } from './components/Login';
 import { Registration } from './components/Registration';
 import { AdminDashboard } from './components/AdminDashboard';
+import { ActivationPending } from './components/ActivationPending';
 import { useTranslation } from 'react-i18next';
 import { getSupabase } from '@/src/lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -20,9 +21,66 @@ import { Loader2 } from 'lucide-react';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const pharmacyId = localStorage.getItem('pharmacy_id');
+  const [status, setStatus] = React.useState<boolean | null>(null);
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const checkStatus = async () => {
+      if (!pharmacyId) {
+        setStatus(false);
+        return;
+      }
+
+      if (pharmacyId === 'admin') {
+        setStatus(true);
+        return;
+      }
+
+      const supabase = getSupabase();
+      if (!supabase) {
+        setStatus(true); // Fallback if supabase is down but we have id
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('pharmacies')
+          .select('status')
+          .eq('pharmacy_id', pharmacyId)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data && data.status === false) {
+          // If status is false, sign out and redirect
+          await supabase.auth.signOut();
+          localStorage.clear();
+          navigate('/activation-pending');
+          return;
+        }
+        
+        setStatus(true);
+      } catch (err) {
+        console.error('Status check error:', err);
+        setStatus(true); // Allow if check fails to avoid locking out users on minor errors
+      }
+    };
+
+    checkStatus();
+  }, [pharmacyId, navigate]);
+
   if (!pharmacyId) {
     return <Navigate to="/login" replace />;
   }
+
+  if (status === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
   return <Layout>{children}</Layout>;
 };
 
@@ -106,6 +164,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Registration />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/activation-pending" element={<ActivationPending />} />
         
         <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />

@@ -33,7 +33,7 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
 
   useEffect(() => {
     const searchDrugs = async () => {
-      if (query.length < 3) {
+      if (query.length < 2) {
         setResults([]);
         setHasSearched(false);
         return;
@@ -46,24 +46,35 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
 
       setLoading(true);
       try {
-        // Hybrid Search Logic
-        const isNumeric = /^\d+$/.test(query);
-        const isBarcode = isNumeric && query.length >= 8;
+        const searchTerm = query.trim();
+        // STRICT FIX: Hardcoded table name 'master' to prevent 404 errors
+        const TABLE_NAME = 'master';
         
-        let orFilter = `arabic_name.ilike.%${query}%,english_name.ilike.%${query}%`;
-        if (isBarcode) {
-          orFilter += `,barcode.eq.${query}`;
+        console.log(`[DrugSearch] Searching for "${searchTerm}" in table "${TABLE_NAME}"`);
+
+        // Construct the OR filter parts
+        // We use .ilike for text columns and .eq for the numeric barcode column
+        // to avoid Postgres Error 42883 (operator does not exist: bigint ~~* text)
+        const filterParts = [
+          `arabic_name.ilike.%${searchTerm}%`,
+          `english_name.ilike.%${searchTerm}%`
+        ];
+
+        // Only add barcode to the OR filter if the search term is numeric
+        const numericSearch = searchTerm.replace(/\s/g, '');
+        if (/^\d+$/.test(numericSearch)) {
+          filterParts.push(`barcode.eq.${numericSearch}`);
         }
 
         const { data, error } = await supabase
-          .from('master')
+          .from(TABLE_NAME)
           .select('*')
-          .or(orFilter)
-          .limit(10);
+          .or(filterParts.join(','))
+          .limit(20);
 
         if (error) throw error;
 
-        // Map the results to our Drug type
+        // Map the results to our Drug type using exact column names from SQL
         const mappedData = (data || []).map((item: any) => ({
           id: item.id,
           barcode: item.barcode,
@@ -74,10 +85,16 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
         }));
 
         setResults(mappedData);
+        console.log(`[DrugSearch] Results found: ${mappedData.length}`);
         setHasSearched(true);
         
         // Selection Behavior: If exact barcode match and single result, select automatically
-        if (isBarcode && mappedData.length === 1 && mappedData[0].barcode.toString() === query) {
+        // We clean the query of spaces for barcode matching (e.g., '1 2 3' -> '123')
+        const searchVal = searchTerm.replace(/\s/g, '');
+        const isNumeric = /^\d+$/.test(searchVal);
+        const isBarcode = isNumeric && searchVal.length >= 8;
+        
+        if (isBarcode && mappedData.length === 1 && mappedData[0].barcode.toString() === searchVal) {
           onSelect(mappedData[0]);
           setQuery('');
           setIsOpen(false);
@@ -85,7 +102,7 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
           setIsOpen(true);
         }
       } catch (err) {
-        // Silent fail
+        console.error('Drug search error:', err);
       } finally {
         setLoading(false);
       }
@@ -112,7 +129,14 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
       </div>
 
       {isOpen && (
-        <div className="absolute z-50 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl max-h-80 overflow-y-auto">
+        <div 
+          className="absolute z-[9999] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-x-hidden custom-scrollbar"
+          style={{ 
+            maxHeight: '300px', 
+            overflowY: 'scroll',
+            display: 'block'
+          }}
+        >
           {results.length > 0 ? (
             results.map((drug) => (
               <button
@@ -122,14 +146,16 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
                   setQuery('');
                   setIsOpen(false);
                 }}
-                className="w-full text-start px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-1"
+                className="w-full text-start px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-0.5 transition-colors"
               >
-                <div className="flex justify-between items-start">
-                  <span className="font-semibold text-slate-900">{drug.name_en}</span>
-                  <span className="text-xs font-mono text-slate-400">{drug.barcode}</span>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-slate-900 text-sm truncate flex-1">{drug.name_en}</span>
+                  <span className="text-[10px] font-mono text-slate-400 ml-2 shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">{drug.barcode}</span>
                 </div>
-                <span className="text-sm text-slate-500">{drug.name_ar}</span>
-                <span className="text-xs text-primary font-medium">{drug.manufacturer}</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-slate-500 truncate flex-1">{drug.name_ar}</span>
+                  <span className="text-[10px] text-primary font-bold uppercase tracking-wider ml-2 shrink-0">{drug.manufacturer}</span>
+                </div>
               </button>
             ))
           ) : hasSearched && !loading && (

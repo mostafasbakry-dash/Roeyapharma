@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Package, Plus, Trash2, Edit2, Loader2, AlertCircle, X, ShieldCheck, Info, MinusCircle, PlusCircle, CheckCircle2 } from 'lucide-react';
+import { Package, Plus, Trash2, Edit2, Loader2, AlertCircle, X, ShieldCheck, Info, MinusCircle, PlusCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { Offer, Drug } from '@/src/types';
 import { DrugSearch } from '@/src/components/DrugSearch';
 import { toast } from 'react-hot-toast';
@@ -418,12 +418,13 @@ export const MyOffers = () => {
 
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
+          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-visible animate-in zoom-in duration-200">
             <div className="bg-primary p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold">{t('add_offer')}</h2>
               <button 
                 onClick={() => {
                   setShowAddModal(false);
+                  setSelectedDrug(null);
                 }} 
                 className="hover:bg-white/20 p-1 rounded-lg"
               >
@@ -447,44 +448,41 @@ export const MyOffers = () => {
                   />
                 ) : (
                   <div className="space-y-3 animate-in fade-in duration-300">
-                    <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200">
-                      <div className="flex items-center gap-2 text-primary font-bold">
-                        <ShieldCheck size={18} />
-                        <span>Drug Verified</span>
+                    <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 hover:border-primary/30 hover:bg-slate-100/50 transition-all duration-300 group">
+                      <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                          <ShieldCheck size={18} />
+                          <span className="text-xs uppercase tracking-wider">Drug Verified</span>
+                        </div>
+                        <button 
+                          type="button"
+                          onClick={() => setSelectedDrug(null)} 
+                          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 hover:text-primary hover:border-primary transition-all shadow-sm group-hover:shadow-md"
+                        >
+                          <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
+                          <span>{i18n.language === 'ar' ? 'تغيير الصنف' : 'Change Drug'}</span>
+                        </button>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={() => setSelectedDrug(null)} 
-                        className="text-slate-400 hover:text-red-500 text-xs font-bold uppercase"
-                      >
-                        {t('change')}
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('english_name')}</label>
-                        <input 
-                          disabled 
-                          value={selectedDrug.name_en || ''} 
-                          className="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed font-medium"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('arabic_name')}</label>
-                        <input 
-                          disabled 
-                          value={selectedDrug.name_ar || ''} 
-                          className="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed font-medium text-right"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('barcode')}</label>
-                        <input 
-                          disabled 
-                          value={selectedDrug.barcode || ''} 
-                          className="w-full p-3 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed font-mono"
-                        />
+                      
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('english_name')}</label>
+                          <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold shadow-sm">
+                            {selectedDrug.name_en || ''}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('arabic_name')}</label>
+                          <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold text-right shadow-sm">
+                            {selectedDrug.name_ar || ''}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('barcode')}</label>
+                          <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-500 font-mono text-sm shadow-sm">
+                            {selectedDrug.barcode || ''}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

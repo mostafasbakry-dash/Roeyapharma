@@ -167,7 +167,7 @@ export const Dashboard = () => {
       
       // Sold Quantity Counter: sum(quantity) from sales_archive where action_type matches Offer labels
       // Only items archived from 'Offers' count towards 'Sold Quantity'
-      const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع'];
+      const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع', 'Sell Out Roeya', 'تم البيع خارج رؤية', 'Transfer in Roeya', 'تم التحويل عبر رؤية'];
       const filteredArchive = (archive || []).filter(item => offerSaleLabels.includes(item.action_type));
       
       const soldQuantity = filteredArchive.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
@@ -342,8 +342,8 @@ export const Dashboard = () => {
     if (item.type === 'offer') return 'New Offer';
     if (item.type === 'request') return 'New Request';
     if (item.type === 'archive') {
-      const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع'];
-      const requestLabels = ['تم الشراء', 'Purchased', 'تم التحويل', 'Transferred'];
+      const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع', 'Sell Out Roeya', 'تم البيع خارج رؤية', 'Transfer in Roeya', 'تم التحويل عبر رؤية'];
+      const requestLabels = ['تم الشراء', 'Purchased', 'تم التحويل', 'Transferred', 'Purchased Out Roeya', 'تم الشراء خارج رؤية', 'Transferred in Roeya', 'تم التحويل عبر رؤية'];
       
       if (offerSaleLabels.includes(item.action_type)) return 'Offer Sold/Transferred';
       if (requestLabels.includes(item.action_type)) return 'Request Completed';

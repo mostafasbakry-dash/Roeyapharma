@@ -32,7 +32,7 @@ export const Login = () => {
     
     const supabase = getSupabase();
     if (!supabase) {
-      toast.error('Connection error');
+      toast.error(t('login_connection_error'));
       setLoading(false);
       return;
     }
@@ -75,11 +75,11 @@ export const Login = () => {
           localStorage.setItem('is_admin', 'true');
           localStorage.setItem('admin_email', normalizedEmail);
           localStorage.setItem('pharmacy_id', 'admin');
-          toast.success('Welcome Super Admin!');
+          toast.success(t('login_welcome_admin'));
           navigate('/admin-control-panel-988');
           return;
         } else {
-          toast.error('Unauthorized admin access');
+          toast.error(t('login_unauthorized_admin'));
           setLoading(false);
           return;
         }
@@ -106,7 +106,7 @@ export const Login = () => {
 
       // 2. Manual Password Verification
       if (credentialData.password !== credentials.password) {
-        toast.error('Invalid password');
+        toast.error(t('login_invalid_password'));
         setLoading(false);
         return;
       }
@@ -156,10 +156,10 @@ export const Login = () => {
       }
 
       localStorage.removeItem('is_admin'); // Explicitly ensure no admin flag
-      toast.success('Welcome back!');
+      toast.success(t('login_welcome_back'));
       navigate('/');
     } catch (err) {
-      toast.error('An error occurred during login');
+      toast.error(t('login_error_generic'));
     } finally {
       setLoading(false);
     }
@@ -173,7 +173,7 @@ export const Login = () => {
             <Building size={32} />
           </div>
           <h2 className="text-2xl font-bold">{t('login')}</h2>
-          <p className="text-white/70 text-sm mt-2">Access your pharmacy dashboard</p>
+          <p className="text-white/70 text-sm mt-2">{t('login_tagline')}</p>
         </div>
 
         <div className="p-8">
@@ -213,7 +213,7 @@ export const Login = () => {
               {loading ? <Loader2 className="animate-spin" /> : t('login')}
             </button>
             <p className="text-center text-sm text-slate-500">
-              Don't have an account? <Link to="/register" className="text-primary font-bold">Register</Link>
+              {t('login_no_account')} <Link to="/register" className="text-primary font-bold">{t('login_register_link')}</Link>
             </p>
           </form>
         </div>

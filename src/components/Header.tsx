@@ -23,8 +23,8 @@ export const Header = () => {
 
     if (isAdmin) {
       setPharmacy({
-        name: 'System Administrator',
-        address: adminEmail || 'Admin Panel',
+        name: t('system_administrator'),
+        address: adminEmail || t('admin_panel'),
         avatar_url: undefined
       });
       setLoading(false);
@@ -77,7 +77,7 @@ export const Header = () => {
         {loading ? (
           <div className="flex items-center gap-2 text-slate-400">
             <Loader2 size={16} className="animate-spin" />
-            <span className="text-sm font-medium">Loading pharmacy info...</span>
+            <span className="text-sm font-medium">{t('loading_pharmacy_info')}</span>
           </div>
         ) : pharmacy ? (
           <div className="flex items-center gap-4">
@@ -100,7 +100,7 @@ export const Header = () => {
           </div>
         ) : (
           <div className="text-slate-400 text-sm italic">
-            Pharmacy information not found
+            {t('pharmacy_info_not_found')}
           </div>
         )}
         

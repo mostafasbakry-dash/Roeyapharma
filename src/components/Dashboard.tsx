@@ -224,7 +224,7 @@ export const Dashboard = () => {
         // Show one-time toast if telegram is empty
         const toastKey = `telegram_toast_shown_${current_user_id}`;
         if (!localStorage.getItem(toastKey)) {
-          toast('يرجى إضافة معرف التليجرام في الإعدادات لتلقي التنبيهات', {
+          toast(t('telegram_alert_msg'), {
             icon: '🔔',
             duration: 5000
           });
@@ -296,7 +296,7 @@ export const Dashboard = () => {
             const newMatches = allMatchPairs.filter(pair => !notifiedMatches.includes(pair));
 
             if (newMatches.length > 0) {
-              sendTelegramWebhook(chatId, 'من خلال رؤية تم العثور على أصناف مطابقة لعروضك أو طلباتك. ادخل الداشبورد دلوقتي وشوفها في قسم أصناف عثر عليها واتواصل مع الصيدليه اللي عارضاها');
+              sendTelegramWebhook(chatId, t('telegram_match_msg'));
               
               // Update notified matches in localStorage
               const updatedNotifiedMatches = Array.from(new Set([...notifiedMatches, ...allMatchPairs]));
@@ -339,17 +339,17 @@ export const Dashboard = () => {
   };
 
   const getActivityLabel = (item: any) => {
-    if (item.type === 'offer') return 'New Offer';
-    if (item.type === 'request') return 'New Request';
+    if (item.type === 'offer') return t('activity_new_offer');
+    if (item.type === 'request') return t('activity_new_request');
     if (item.type === 'archive') {
       const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع', 'Sell Out Roeya', 'تم البيع خارج رؤية', 'Transfer in Roeya', 'تم التحويل عبر رؤية'];
       const requestLabels = ['تم الشراء', 'Purchased', 'تم التحويل', 'Transferred', 'Purchased Out Roeya', 'تم الشراء خارج رؤية', 'Transferred in Roeya', 'تم التحويل عبر رؤية'];
       
-      if (offerSaleLabels.includes(item.action_type)) return 'Offer Sold/Transferred';
-      if (requestLabels.includes(item.action_type)) return 'Request Completed';
-      return 'Item Archived';
+      if (offerSaleLabels.includes(item.action_type)) return t('activity_sold');
+      if (requestLabels.includes(item.action_type)) return t('activity_completed');
+      return t('item_archived');
     }
-    return 'Activity';
+    return t('activity');
   };
 
   return (
@@ -357,7 +357,7 @@ export const Dashboard = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">{t('dashboard')}</h1>
-          <p className="text-slate-500">{t('tagline')}</p>
+          <p className="text-slate-500">{t('dashboard_tagline')}</p>
         </div>
         <div className="flex gap-2">
           <button 
@@ -414,7 +414,7 @@ export const Dashboard = () => {
         />
         <StatCard 
           title={t('cumulative_rating')} 
-          value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : 'N/A'} 
+          value={stats.avgRating > 0 ? stats.avgRating.toFixed(1) : t('not_available')} 
           icon={Star} 
           color="bg-amber-400"
         />
@@ -508,8 +508,8 @@ export const Dashboard = () => {
 
           {/* Recent Activity */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-900">Recent Activity</h2>
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <h2 className="text-xl font-bold text-slate-900">{t('recent_activity')}</h2>
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
               {loading ? (
                 <div className="p-12 flex items-center justify-center">
@@ -534,20 +534,20 @@ export const Dashboard = () => {
                     </div>
                     <div className="text-end">
                       <p className="font-bold text-slate-900">
-                        {item.type === 'offer' || item.type === 'archive' ? formatCurrency(Number(item.price) || 0) : `${item.quantity} units`}
+                        {item.type === 'offer' || item.type === 'archive' ? formatCurrency(Number(item.price) || 0) : `${item.quantity} ${t('units')}`}
                       </p>
                       <p className={cn(
                         "text-[10px] font-bold uppercase",
                         item.type === 'archive' ? "text-amber-600" : "text-emerald-600"
                       )}>
-                        {item.type === 'archive' ? item.action_type : 'Active'}
+                        {item.type === 'archive' ? item.action_type : t('dashboard_active')}
                       </p>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="p-12 text-center text-slate-500">
-                  {error ? 'Failed to load activity' : 'No recent activity found.'}
+                  {error ? t('failed_load_activity') : t('no_recent_activity')}
                 </div>
               )}
             </div>
@@ -558,7 +558,7 @@ export const Dashboard = () => {
       <div className="space-y-8">
           {/* Quick Actions */}
           <div className="space-y-4">
-            <h2 className="text-xl font-bold text-slate-900">Quick Actions</h2>
+            <h2 className="text-xl font-bold text-slate-900">{t('quick_actions')}</h2>
             <div className="grid grid-cols-1 gap-3">
               <button 
                 onClick={() => setShowExpiryModal(true)}
@@ -568,8 +568,8 @@ export const Dashboard = () => {
                   <AlertCircle size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">Near Expiry Alert</p>
-                  <p className="text-xs text-slate-500">Check items expiring soon</p>
+                  <p className="font-bold text-slate-900">{t('near_expiry_alert')}</p>
+                  <p className="text-xs text-slate-500">{t('check_items_expiring')}</p>
                 </div>
               </button>
               <button 
@@ -580,8 +580,8 @@ export const Dashboard = () => {
                   <TrendingUp size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">Optimization Tips</p>
-                  <p className="text-xs text-slate-500">Increase sales with discounts</p>
+                  <p className="font-bold text-slate-900">{t('optimization_tips')}</p>
+                  <p className="text-xs text-slate-500">{t('increase_sales_discounts')}</p>
                 </div>
               </button>
             </div>
@@ -590,7 +590,7 @@ export const Dashboard = () => {
           {/* Priority Expiry Watch */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900">Priority Expiry Watch</h2>
+              <h2 className="text-xl font-bold text-slate-900">{t('priority_expiry_watch')}</h2>
             </div>
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               {loading ? (
@@ -613,17 +613,17 @@ export const Dashboard = () => {
                           <div className="flex justify-between items-start mb-1">
                             <p className="font-bold text-slate-900 text-sm truncate flex-1 me-2">{offer.english_name}</p>
                             <span className={cn(
-                              "px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0",
-                              status.color === 'rose' && "bg-rose-100 text-rose-700",
-                              status.color === 'orange' && "bg-orange-100 text-orange-700",
-                              status.color === 'emerald' && "bg-emerald-100 text-emerald-700"
-                            )}>
-                              {status.label}
-                            </span>
+                               "px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0",
+                               status.color === 'rose' && "bg-rose-100 text-rose-700",
+                               status.color === 'orange' && "bg-orange-100 text-orange-700",
+                               status.color === 'emerald' && "bg-emerald-100 text-emerald-700"
+                             )}>
+                               {status.label}
+                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs text-slate-500">
-                            <span>Exp: {new Date(offer.expiry_date).toLocaleDateString()}</span>
-                            <span className="font-mono font-bold text-slate-700">{status.days} days left</span>
+                            <span>{t('expiry_date')}: {new Date(offer.expiry_date).toLocaleDateString()}</span>
+                            <span className="font-mono font-bold text-slate-700">{t('days_left', { count: status.days })}</span>
                           </div>
                         </div>
                       );
@@ -634,7 +634,7 @@ export const Dashboard = () => {
                   <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
                     <ShieldCheck size={24} />
                   </div>
-                  <p className="text-xs text-slate-500 font-medium">All items are safe.</p>
+                  <p className="text-xs text-slate-500 font-medium">{t('all_items_safe')}</p>
                 </div>
               )}
             </div>
@@ -650,7 +650,7 @@ export const Dashboard = () => {
             <div className="bg-rose-500 p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <AlertCircle size={24} />
-                Near Expiry Alert
+                {t('near_expiry_alert')}
               </h2>
               <button onClick={() => setShowExpiryModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <Plus className="rotate-45" size={24} />
@@ -678,7 +678,7 @@ export const Dashboard = () => {
                           <div>
                             <p className="font-bold text-slate-900">{offer.english_name}</p>
                             <p className="text-xs text-slate-500">
-                              Expires: {new Date(offer.expiry_date).toLocaleDateString()} ({status.days} days left)
+                              {t('expiry_date')}: {new Date(offer.expiry_date).toLocaleDateString()} ({t('days_left', { count: status.days })})
                             </p>
                           </div>
                         </div>
@@ -690,7 +690,7 @@ export const Dashboard = () => {
                   })
               ) : (
                 <div className="text-center py-12 text-slate-500">
-                  No critical items near expiry found. Great job!
+                  {t('no_critical_items')}
                 </div>
               )}
             </div>
@@ -705,7 +705,7 @@ export const Dashboard = () => {
             <div className="bg-emerald-500 p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <TrendingUp size={24} />
-                Optimization Tips
+                {t('optimization_tips')}
               </h2>
               <button onClick={() => setShowOptimizationModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <Plus className="rotate-45" size={24} />
@@ -733,7 +733,7 @@ export const Dashboard = () => {
                             <p className="font-bold text-slate-900">{offer.english_name}</p>
                           </div>
                           <div className="text-end">
-                            <p className="text-xs text-slate-500">Current Discount</p>
+                            <p className="text-xs text-slate-500">{t('current_discount')}</p>
                             <p className="font-bold text-primary">{offer.discount}%</p>
                           </div>
                         </div>
@@ -742,7 +742,7 @@ export const Dashboard = () => {
                             <Star size={14} />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900">Recommendation</p>
+                            <p className="text-sm font-bold text-slate-900">{t('recommendation')}</p>
                             <p className="text-xs text-slate-600">{status.suggestion}</p>
                           </div>
                         </div>
@@ -751,7 +751,7 @@ export const Dashboard = () => {
                   })
               ) : (
                 <div className="text-center py-12 text-slate-500">
-                  No optimization tips available at this time.
+                  {t('no_optimization_tips')}
                 </div>
               )}
             </div>
@@ -761,3 +761,5 @@ export const Dashboard = () => {
     </div>
   );
 };
+
+export default Dashboard;

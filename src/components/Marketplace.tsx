@@ -72,7 +72,7 @@ export const Marketplace = () => {
         setFilteredItems(updateList);
       }
 
-      toast.success(isRtl ? 'تم تأكيد التعامل بنجاح' : 'Transaction confirmed successfully');
+      toast.success(t('transaction_confirmed_success'));
       
       setTransferModalItem(null);
       setRatingItem(item);
@@ -206,7 +206,7 @@ export const Marketplace = () => {
                 viewType === 'offers' ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
-              {isRtl ? 'المعروض' : 'Offers'}
+              {t('offers')}
             </button>
             <button
               onClick={() => setViewType('requests')}
@@ -215,7 +215,7 @@ export const Marketplace = () => {
                 viewType === 'requests' ? "bg-white text-primary shadow-sm" : "text-slate-500 hover:text-slate-700"
               )}
             >
-              {isRtl ? 'المطلوب' : 'Requests'}
+              {t('requests')}
             </button>
           </div>
         </div>
@@ -290,7 +290,7 @@ export const Marketplace = () => {
               className="w-full py-2 text-slate-500 hover:text-slate-800 font-semibold flex items-center justify-center gap-2"
             >
               <X size={16} />
-              Reset Filters
+              {t('reset_filters')}
             </button>
           </div>
         </div>
@@ -305,9 +305,12 @@ export const Marketplace = () => {
           filteredItems.map(item => (
             <OfferCard
               key={item.id}
-              offer={item}
+              offer={{
+                ...item,
+                arabic_name: item.english_name // Force English name even in Arabic UI
+              }}
               userCity={userProfile?.city}
-              actionLabel="Contact Pharmacy"
+              actionLabel={t('contact_pharmacy')}
               onAction={(o) => setSelectedItem(o)}
               onConfirm={(o) => {
                 setTransferModalItem(o);
@@ -320,8 +323,8 @@ export const Marketplace = () => {
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
               <Search size={40} />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">{error ? `Failed to load ${viewType}` : `No ${viewType} found`}</h3>
-            <p className="text-slate-500">{error ? 'Please try again later' : 'Try adjusting your search or filters'}</p>
+            <h3 className="text-xl font-bold text-slate-900">{error ? t('error_generic') : t('no_matches')}</h3>
+            <p className="text-slate-500">{error ? t('error_generic') : t('search_placeholder')}</p>
           </div>
         )}
       </div>
@@ -330,7 +333,7 @@ export const Marketplace = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
             <div className="bg-primary p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">Pharmacy Details</h2>
+              <h2 className="text-xl font-bold">{t('pharmacy_details')}</h2>
               <button 
                 onClick={() => setSelectedItem(null)} 
                 className="hover:bg-white/20 p-1 rounded-lg"
@@ -346,11 +349,11 @@ export const Marketplace = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">
-                    {selectedItem.pharmacies?.pharmacy_name || selectedItem.pharmacy_name || 'Unknown Pharmacy'}
+                    {selectedItem.pharmacies?.pharmacy_name || selectedItem.pharmacy_name || t('unknown_pharmacy')}
                   </h3>
                   <p className="text-slate-500 flex items-center gap-1">
                     <MapPin size={14} />
-                    {selectedItem.pharmacies?.city || selectedItem.city || 'Unknown Location'}
+                    {selectedItem.pharmacies?.city || selectedItem.city || t('unknown_location')}, {t('egypt')}
                   </p>
                 </div>
               </div>
@@ -360,7 +363,7 @@ export const Marketplace = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-slate-600">
                       <Phone size={18} className="text-primary" />
-                      <span className="font-medium">{selectedItem.pharmacies?.phone || 'Not provided'}</span>
+                      <span className="font-medium">{selectedItem.pharmacies?.phone || t('not_provided')}</span>
                     </div>
                     {selectedItem.pharmacies?.phone && (
                       <a 
@@ -376,7 +379,7 @@ export const Marketplace = () => {
                     <div className="flex items-center gap-3 text-slate-600">
                       <MessageSquare size={18} className="text-sky-500" />
                       <span className="font-medium">
-                        {selectedItem.pharmacies?.telegram ? `@${selectedItem.pharmacies.telegram}` : 'Not provided'}
+                        {selectedItem.pharmacies?.telegram ? `@${selectedItem.pharmacies.telegram}` : t('not_provided')}
                       </span>
                     </div>
                     {selectedItem.pharmacies?.telegram && (
@@ -393,9 +396,9 @@ export const Marketplace = () => {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase px-1">Full Address</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('full_address')}</label>
                   <p className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-700 text-sm">
-                    {selectedItem.pharmacies?.address || selectedItem.pharmacy_address}
+                    {selectedItem.pharmacies?.address || selectedItem.pharmacy_address || t('not_provided')}
                   </p>
                 </div>
               </div>
@@ -404,7 +407,7 @@ export const Marketplace = () => {
                 onClick={() => setSelectedItem(null)}
                 className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all"
               >
-                Close
+                {t('close')}
               </button>
             </div>
           </div>
@@ -427,7 +430,7 @@ export const Marketplace = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
             <div className="bg-primary p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">{isRtl ? 'تأكيد التعامل' : 'Confirm Transaction'}</h2>
+              <h2 className="text-xl font-bold">{t('confirm_transaction')}</h2>
               <button 
                 onClick={() => setTransferModalItem(null)} 
                 className="hover:bg-white/20 p-1 rounded-lg"
@@ -439,16 +442,16 @@ export const Marketplace = () => {
             <div className="p-6 space-y-6">
               <div className="space-y-2">
                 <h3 className="font-bold text-slate-900">
-                  {isRtl ? transferModalItem.arabic_name : transferModalItem.english_name}
+                  {transferModalItem.english_name}
                 </h3>
                 <p className="text-sm text-slate-500">
-                  {isRtl ? 'الكمية المتاحة:' : 'Available Quantity:'} {transferModalItem.quantity}
+                  {t('available_quantity')} {transferModalItem.quantity}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-500 uppercase">
-                  {isRtl ? 'الكمية المراد تحويلها' : 'Quantity to Transfer'}
+                  {t('quantity_to_transfer')}
                 </label>
                 <input
                   type="number"
@@ -472,7 +475,7 @@ export const Marketplace = () => {
                   disabled={loading || transferQuantity <= 0 || transferQuantity > transferModalItem.quantity}
                   className="flex-1 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
                 >
-                  {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : (isRtl ? 'تأكيد' : 'Confirm')}
+                  {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('confirm')}
                 </button>
               </div>
             </div>

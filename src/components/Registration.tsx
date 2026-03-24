@@ -60,7 +60,7 @@ export const Registration = () => {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 409 || errorData.message?.toLowerCase().includes('already registered') || errorData.error?.toLowerCase().includes('duplicate')) {
-          toast.error('This email is already registered');
+          toast.error(t('register_email_exists'));
           return;
         }
         throw new Error(`Registration failed: ${response.status}`);
@@ -68,7 +68,7 @@ export const Registration = () => {
       
       localStorage.setItem('temp_pharmacy_id', pharmacy_id.toString());
       setStep(2);
-      toast.success('Account created! Now complete your profile.');
+      toast.success(t('register_success_step1'));
     } catch (err: any) {
       toast.error(t('error_generic'));
     } finally {
@@ -112,7 +112,7 @@ export const Registration = () => {
       localStorage.removeItem('is_admin'); // Explicitly ensure not admin
       localStorage.removeItem('admin_email');
       
-      toast.success('Profile completed successfully!');
+      toast.success(t('register_success_complete'));
       navigate('/');
     } catch (err: any) {
       toast.error(t('error_generic'));
@@ -130,7 +130,7 @@ export const Registration = () => {
           </div>
           <h2 className="text-2xl font-bold">{t('register')}</h2>
           <p className="text-white/70 text-sm mt-2">
-            {step === 1 ? 'Create your account credentials' : 'Tell us about your pharmacy'}
+            {step === 1 ? t('register_step1_tagline') : t('register_step2_tagline')}
           </p>
         </div>
 
@@ -177,15 +177,7 @@ export const Registration = () => {
                   />
                 </div>
                 <label htmlFor="terms" className="text-sm text-slate-600 cursor-pointer">
-                  {i18n.language === 'ar' ? (
-                    <>
-                      أوافق على <Link to="/terms" className="text-primary font-bold hover:underline">الشروط والأحكام</Link>
-                    </>
-                  ) : (
-                    <>
-                      I agree to the <Link to="/terms" className="text-primary font-bold hover:underline">Terms and Conditions</Link>
-                    </>
-                  )}
+                  {t('register_agree_terms')} <Link to="/terms" className="text-primary font-bold hover:underline">{t('terms_and_conditions')}</Link>
                 </label>
               </div>
 
@@ -196,7 +188,7 @@ export const Registration = () => {
                 {loading ? <Loader2 className="animate-spin" /> : t('register')}
               </button>
               <p className="text-center text-sm text-slate-500">
-                Already have an account? <Link to="/login" className="text-primary font-bold">Login</Link>
+                {t('register_already_have_account')} <Link to="/login" className="text-primary font-bold">{t('login')}</Link>
               </p>
             </form>
           ) : (

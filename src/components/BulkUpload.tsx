@@ -318,7 +318,7 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
                   className="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all shadow-md shadow-emerald-200 disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="animate-spin" size={20} /> : <Upload size={20} />}
-                  Confirm Upload ({previewData.length} items)
+                  {t('confirm_upload')} ({previewData.length} {t('items')})
                 </button>
               )}
             </div>
@@ -330,7 +330,7 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
             <div className="flex justify-between items-center text-sm font-bold text-slate-600">
               <span className="flex items-center gap-2">
                 <Loader2 className="animate-spin" size={16} />
-                Processing items...
+                {t('processing_items')}
               </span>
               <span>{progress}%</span>
             </div>
@@ -346,8 +346,8 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
         <div className="mt-8 p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-start gap-3">
           <AlertTriangle className="text-amber-600 shrink-0 mt-0.5" size={20} />
           <div className="text-sm text-amber-800">
-            <p className="font-bold mb-1">Important Note:</p>
-            <p>Please ensure all dates are in YYYY-MM-DD format and barcodes are 13-digit numbers. Duplicate items (same barcode and expiry) will be flagged.</p>
+            <p className="font-bold mb-1">{t('important_note')}</p>
+            <p>{t('bulk_upload_note')}</p>
           </div>
         </div>
       </div>
@@ -355,23 +355,23 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
       {previewData.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-lg text-slate-900">Preview Data</h3>
+            <h3 className="font-bold text-lg text-slate-900">{t('preview_data')}</h3>
             <button 
               onClick={() => setPreviewData([])}
               className="text-sm text-slate-500 hover:text-rose-500 font-medium"
             >
-              Clear Preview
+              {t('clear_preview')}
             </button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-xs">
                 <tr>
-                  <th className="px-6 py-3">Barcode</th>
-                  <th className="px-6 py-3">Drug Name</th>
-                  <th className="px-6 py-3">Expiry</th>
-                  <th className="px-6 py-3">Price</th>
-                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">{t('barcode')}</th>
+                  <th className="px-6 py-3">{t('drug_name')}</th>
+                  <th className="px-6 py-3">{t('expiry')}</th>
+                  <th className="px-6 py-3">{t('price')}</th>
+                  <th className="px-6 py-3">{t('status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -390,9 +390,9 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
                       <td className="px-6 py-4 font-bold">{row['Price']}</td>
                       <td className="px-6 py-4">
                         {isValid ? (
-                          <span className="text-emerald-600 font-bold">Ready</span>
+                          <span className="text-emerald-600 font-bold">{t('ready')}</span>
                         ) : (
-                          <span className="text-rose-600 font-bold">Not in Master List</span>
+                          <span className="text-rose-600 font-bold">{t('not_in_master_list')}</span>
                         )}
                       </td>
                     </tr>

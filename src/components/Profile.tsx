@@ -222,9 +222,9 @@ export const Profile = () => {
       localStorage.setItem('pharmacy_profile', JSON.stringify(updatedProfile));
       window.dispatchEvent(new Event('profileUpdated'));
       
-      toast.success('Profile picture updated!');
+      toast.success(t('profile_pic_update_success'));
     } catch (err: any) {
-      toast.error('Failed to upload image');
+      toast.error(t('profile_upload_failed'));
     } finally {
       setLoading(false);
     }
@@ -261,7 +261,7 @@ export const Profile = () => {
               />
             </div>
             <h2 className="text-xl font-bold text-slate-900">{profile.name}</h2>
-            <p className="text-slate-500 text-sm mb-4">{profile.city}, Egypt</p>
+            <p className="text-slate-500 text-sm mb-4">{profile.city}, {t('egypt')}</p>
             
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
@@ -304,12 +304,12 @@ export const Profile = () => {
           </div>
 
           <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
-            <h3 className="font-bold text-slate-900">Security</h3>
+            <h3 className="font-bold text-slate-900">{t('security')}</h3>
             <button 
               onClick={() => navigate('/settings')}
               className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl font-semibold text-sm transition-all text-start flex items-center justify-between"
             >
-              Change Password
+              {t('change_password')}
               <Lock size={16} className="text-slate-400" />
             </button>
           </div>

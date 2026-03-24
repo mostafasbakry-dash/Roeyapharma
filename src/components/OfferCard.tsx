@@ -32,7 +32,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-bold text-lg text-slate-900 group-hover:text-primary transition-colors">
-                {isRtl ? offer.arabic_name : offer.english_name}
+                {offer.english_name}
               </h3>
               {isInUserCity && (
                 <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
@@ -45,7 +45,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
           <div className="flex flex-col items-end gap-2">
             {offer.discount !== undefined && offer.discount > 0 && (
               <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold">
-                {offer.discount}% OFF
+                {offer.discount}% {t('off')}
               </div>
             )}
             {isNearExpiry && (
@@ -54,7 +54,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
               </div>
             )}
             <div className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
-              {isRtl ? `الكمية: ${offer.quantity}` : `Qty: ${offer.quantity}`}
+              {t('quantity')}: {offer.quantity}
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
               onClick={() => onConfirm(offer)}
               className="w-full py-3 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
             >
-              {i18n.language === 'ar' ? 'تأكيد التعامل' : 'Confirm Transaction'}
+              {t('confirm_transaction')}
             </button>
           )}
         </div>

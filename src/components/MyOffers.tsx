@@ -148,12 +148,12 @@ export const MyOffers = () => {
         }]);
 
       if (archiveError) {
-        toast.error('Failed to archive record: ' + archiveError.message);
+        toast.error(t('dashboard_archive_failed_msg', { message: archiveError.message }));
         return false;
       }
       return true;
     } catch (err) {
-      toast.error('Failed to archive record');
+      toast.error(t('dashboard_archive_failed'));
       return false;
     }
   };
@@ -170,7 +170,7 @@ export const MyOffers = () => {
 
       const success = await archiveItem(selectedOffer, selectedOffer.quantity, actionType);
       if (success) {
-        toast.success('تم تحديث البيانات ونقل السجل للأرشيف بنجاح');
+        toast.success(t('dashboard_archive_success'));
         setShowCancelModal(false);
         setSelectedOffer(null);
         // Add a small delay to allow the background DB trigger to complete
@@ -205,7 +205,7 @@ export const MyOffers = () => {
 
       if (deleteError) throw deleteError;
 
-      toast.success(isRtl ? 'تم حذف العرض بنجاح' : 'Offer deleted successfully');
+      toast.success(t('dashboard_delete_success'));
       setShowCancelModal(false);
       setSelectedOffer(null);
       fetchOffers();
@@ -232,7 +232,7 @@ export const MyOffers = () => {
           
           if (updateError) throw updateError;
           
-          toast.success('تم تحديث الكمية بنجاح');
+          toast.success(t('dashboard_qty_update_success'));
           setShowQuantityModal(false);
           setSelectedOffer(null);
           fetchOffers();
@@ -255,7 +255,7 @@ export const MyOffers = () => {
     try {
       const success = await archiveItem(selectedOffer, quantityValue, actionType);
       if (success) {
-        toast.success('تم تحديث البيانات ونقل السجل للأرشيف بنجاح');
+        toast.success(t('dashboard_archive_success'));
         setShowDeductActionModal(false);
         setSelectedOffer(null);
         // Add a small delay to allow the background DB trigger to complete
@@ -286,7 +286,7 @@ export const MyOffers = () => {
         
         if (updateError) throw updateError;
         
-        toast.success('تم تحديث البيانات بنجاح');
+        toast.success(t('dashboard_update_success'));
         setShowEditModal(false);
         setSelectedOffer(null);
         fetchOffers();
@@ -303,13 +303,13 @@ export const MyOffers = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">{t('my_offers')}</h1>
-          <p className="text-slate-500">Manage your inventory and stock</p>
+          <p className="text-slate-500">{t('dashboard_manage_inventory')}</p>
         </div>
         <button
           onClick={() => {
             const pid = localStorage.getItem('pharmacy_id');
             if (!pid) {
-              toast.error('Please complete your pharmacy profile first to start adding items');
+              toast.error(t('dashboard_complete_profile_first'));
               navigate('/profile');
               return;
             }
@@ -452,7 +452,7 @@ export const MyOffers = () => {
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
                           <ShieldCheck size={18} />
-                          <span className="text-xs uppercase tracking-wider">Drug Verified</span>
+                          <span className="text-xs uppercase tracking-wider">{t('dashboard_drug_verified')}</span>
                         </div>
                         <button 
                           type="button"
@@ -460,7 +460,7 @@ export const MyOffers = () => {
                           className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 hover:text-primary hover:border-primary transition-all shadow-sm group-hover:shadow-md"
                         >
                           <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                          <span>{i18n.language === 'ar' ? 'تغيير الصنف' : 'Change Drug'}</span>
+                          <span>{t('dashboard_change_drug')}</span>
                         </button>
                       </div>
                       
@@ -606,7 +606,7 @@ export const MyOffers = () => {
               <AlertCircle size={32} />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('archive_question')}</h2>
-            <p className="text-slate-500 mb-8">سيتم نقل هذا العرض إلى الأرشيف</p>
+            <p className="text-slate-500 mb-8">{t('dashboard_archive_offer_msg')}</p>
             <div className="grid grid-cols-1 gap-3">
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -650,7 +650,7 @@ export const MyOffers = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
             <div className="bg-primary p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">تحديث الكمية</h2>
+              <h2 className="text-xl font-bold">{t('dashboard_update_quantity')}</h2>
               <button onClick={() => setShowQuantityModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <X size={24} />
               </button>
@@ -665,7 +665,7 @@ export const MyOffers = () => {
                   )}
                 >
                   <PlusCircle size={32} />
-                  <span className="font-bold">إضافة</span>
+                  <span className="font-bold">{t('dashboard_add')}</span>
                 </button>
                 <button
                   onClick={() => setQuantityAction('deduct')}
@@ -675,14 +675,14 @@ export const MyOffers = () => {
                   )}
                 >
                   <MinusCircle size={32} />
-                  <span className="font-bold">خصم</span>
+                  <span className="font-bold">{t('dashboard_deduct')}</span>
                 </button>
               </div>
 
               {quantityAction && (
                 <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">الكمية</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase">{t('quantity')}</label>
                     <input
                       type="number"
                       required
@@ -697,7 +697,7 @@ export const MyOffers = () => {
                     onClick={handleUpdateQuantity}
                     className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20"
                   >
-                    متابعة
+                    {t('dashboard_continue')}
                   </button>
                 </div>
               )}
@@ -720,7 +720,7 @@ export const MyOffers = () => {
               <Info size={32} />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('archive_question')}</h2>
-            <p className="text-slate-500 mb-8">سيتم أرشفة {quantityValue} وحدة</p>
+            <p className="text-slate-500 mb-8">{t('dashboard_archive_units', { count: quantityValue })}</p>
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleDeductArchive(t('archive_internal_sale'))}

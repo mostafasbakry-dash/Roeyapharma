@@ -33,7 +33,7 @@ export const ActivationPending = () => {
           </div>
           
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            {isRtl ? 'قيد المراجعة' : 'Under Review'}
+            {t('activation_title')}
           </h2>
           <div className="h-1 w-20 bg-white/40 mx-auto rounded-full"></div>
         </div>
@@ -41,10 +41,7 @@ export const ActivationPending = () => {
         <div className="p-10 md:p-14 space-y-8">
           <div className={isRtl ? 'text-right' : 'text-left'}>
             <p className="text-xl md:text-2xl text-slate-700 leading-relaxed font-medium mb-8">
-              {isRtl 
-                ? 'أهلاً بك في عائلة رؤية! 🌟 حسابك حالياً في مرحلة المراجعة النهائية لضمان أمان مجتمعنا. يرجى التواصل مع الإدارة لتفعيل حسابك والبدء في رحلة التبادل الذكي.'
-                : 'Welcome to the Roeya Family! 🌟 Your account is currently under review to ensure the security of our community. Please contact the admin to activate your account and start your smart exchange journey.'
-              }
+              {t('activation_message')}
             </p>
           </div>
 
@@ -56,7 +53,7 @@ export const ActivationPending = () => {
               className="flex items-center justify-center gap-3 py-4 px-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200"
             >
               <MessageCircle size={22} />
-              <span>{isRtl ? 'تواصل مع الإدارة' : 'Contact Admin'}</span>
+              <span>{t('activation_contact_admin')}</span>
             </a>
             
             <button
@@ -64,13 +61,13 @@ export const ActivationPending = () => {
               className="flex items-center justify-center gap-3 py-4 px-6 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-bold transition-all"
             >
               <LogOut size={22} />
-              <span>{isRtl ? 'تسجيل الخروج' : 'Logout'}</span>
+              <span>{t('logout')}</span>
             </button>
           </div>
 
           <div className="pt-6 border-t border-slate-100 flex items-center justify-center gap-2 text-slate-400 text-sm">
             <ShieldAlert size={16} />
-            <span>{isRtl ? 'نظام أمان رؤية المتطور' : 'Roeya Advanced Security System'}</span>
+            <span>{t('activation_security_system')}</span>
           </div>
         </div>
       </div>

@@ -131,7 +131,7 @@ export const AdminDashboard = () => {
       if (!isAdminSession) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          toast.error('Unauthorized access');
+          toast.error(t('admin_unauthorized'));
           navigate('/login');
           return;
         }
@@ -143,7 +143,7 @@ export const AdminDashboard = () => {
           .maybeSingle();
         
         if (!adminCheck) {
-          toast.error('Unauthorized access');
+          toast.error(t('admin_unauthorized'));
           navigate('/login');
           return;
         }
@@ -311,10 +311,10 @@ export const AdminDashboard = () => {
         throw deleteError;
       }
 
-      toast.success('Item approved and added to Master');
+      toast.success(t('admin_approve_success'));
       fetchData();
     } catch (err: any) {
-      toast.error(`Failed to approve item: ${err.message || 'Unknown error'}`);
+      toast.error(`${t('error_generic')}: ${err.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -327,10 +327,10 @@ export const AdminDashboard = () => {
     try {
       const { error } = await supabase.from('pending_items').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Item rejected');
+      toast.success(t('admin_reject_success'));
       fetchData();
     } catch (err) {
-      toast.error('Failed to delete item');
+      toast.error(t('error_generic'));
     } finally {
       setConfirmAction(null);
     }
@@ -344,10 +344,10 @@ export const AdminDashboard = () => {
     try {
       const { error } = await supabase.from('pharmacies').update({ account_status: newStatus }).eq('pharmacy_id', id);
       if (error) throw error;
-      toast.success(`Pharmacy ${newStatus === 'blacklisted' ? 'blacklisted' : 'activated'}`);
+      toast.success(newStatus === 'blacklisted' ? t('admin_blacklist_success') : t('admin_activate_success'));
       fetchData();
     } catch (err) {
-      toast.error('Failed to update pharmacy status');
+      toast.error(t('error_generic'));
     } finally {
       setConfirmAction(null);
     }
@@ -360,10 +360,10 @@ export const AdminDashboard = () => {
     try {
       const { error } = await supabase.from('pharmacies').update({ status: !currentStatus }).eq('pharmacy_id', id);
       if (error) throw error;
-      toast.success(`Pharmacy ${!currentStatus ? 'Approved' : 'Deactivated'}`);
+      toast.success(!currentStatus ? t('admin_approve_pharmacy_success') : t('admin_deactivate_pharmacy_success'));
       fetchData();
     } catch (err) {
-      toast.error('Failed to update approval status');
+      toast.error(t('error_generic'));
     }
   };
 
@@ -374,10 +374,10 @@ export const AdminDashboard = () => {
     try {
       const { error } = await supabase.from('pharmacies').delete().eq('pharmacy_id', id);
       if (error) throw error;
-      toast.success('Pharmacy deleted');
+      toast.success(t('admin_delete_pharmacy_success'));
       fetchData();
     } catch (err) {
-      toast.error('Failed to delete pharmacy');
+      toast.error(t('error_generic'));
     } finally {
       setConfirmAction(null);
     }
@@ -396,11 +396,11 @@ export const AdminDashboard = () => {
       }]);
 
       if (error) throw error;
-      toast.success('Admin added successfully');
+      toast.success(t('admin_add_admin_success'));
       setNewAdmin({ email: '', uid: '' });
       fetchData();
     } catch (err) {
-      toast.error('Failed to add admin');
+      toast.error(t('error_generic'));
     } finally {
       setIsAddingAdmin(false);
     }
@@ -413,10 +413,10 @@ export const AdminDashboard = () => {
     try {
       const { error } = await supabase.from('system_admins').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Admin removed');
+      toast.success(t('admin_remove_admin_success'));
       fetchData();
     } catch (err) {
-      toast.error('Failed to remove admin');
+      toast.error(t('error_generic'));
     } finally {
       setConfirmAction(null);
     }
@@ -430,10 +430,10 @@ export const AdminDashboard = () => {
       const table = type === 'offer' ? 'inventory_offers' : 'inventory_requests';
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) throw error;
-      toast.success(`${type} deleted`);
+      toast.success(type === 'offer' ? t('admin_delete_offer_success') : t('admin_delete_request_success'));
       fetchData();
     } catch (err) {
-      toast.error(`Failed to delete ${type}`);
+      toast.error(t('error_generic'));
     } finally {
       setConfirmAction(null);
     }
@@ -446,10 +446,10 @@ export const AdminDashboard = () => {
     try {
       const { error } = await supabase.from('ratings').delete().eq('id', id);
       if (error) throw error;
-      toast.success('Rating deleted');
+      toast.success(t('admin_delete_rating_success'));
       fetchData();
     } catch (err) {
-      toast.error('Failed to delete rating');
+      toast.error(t('error_generic'));
     } finally {
       setConfirmAction(null);
     }
@@ -465,7 +465,7 @@ export const AdminDashboard = () => {
             <Users size={24} />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Total Pharmacies</p>
+            <p className="text-sm text-slate-500 font-medium">{t('admin_total_pharmacies')}</p>
             <h3 className="text-2xl font-bold text-slate-900">{stats.pharmacies}</h3>
           </div>
         </div>
@@ -476,7 +476,7 @@ export const AdminDashboard = () => {
             <Package size={24} />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Active Items</p>
+            <p className="text-sm text-slate-500 font-medium">{t('admin_active_items')}</p>
             <h3 className="text-2xl font-bold text-slate-900">{stats.activeItems}</h3>
           </div>
         </div>
@@ -487,7 +487,7 @@ export const AdminDashboard = () => {
             <CheckCircle size={24} />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Successful Exchanges</p>
+            <p className="text-sm text-slate-500 font-medium">{t('admin_successful_exchanges')}</p>
             <h3 className="text-2xl font-bold text-slate-900">{stats.successfulExchanges}</h3>
           </div>
         </div>
@@ -500,31 +500,31 @@ export const AdminDashboard = () => {
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={20} className="text-emerald-500" />
-          <h3 className="font-bold text-slate-900">Top 5 Most Offered</h3>
+          <h3 className="font-bold text-slate-900">{t('admin_top_offered')}</h3>
         </div>
         <div className="space-y-3">
           {trends.offered.map((item, idx) => (
             <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-sm font-medium text-slate-700">{item.name}</span>
-              <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">{item.count} offers</span>
+              <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">{t('admin_offers_count', { count: item.count })}</span>
             </div>
           ))}
-          {trends.offered.length === 0 && <p className="text-slate-400 text-sm italic">No data available</p>}
+          {trends.offered.length === 0 && <p className="text-slate-400 text-sm italic">{t('admin_no_data')}</p>}
         </div>
       </div>
       <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <TrendingUp size={20} className="text-blue-500" />
-          <h3 className="font-bold text-slate-900">Top 5 Most Requested</h3>
+          <h3 className="font-bold text-slate-900">{t('admin_top_requested')}</h3>
         </div>
         <div className="space-y-3">
           {trends.requested.map((item, idx) => (
             <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
               <span className="text-sm font-medium text-slate-700">{item.name}</span>
-              <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{item.count} requests</span>
+              <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{t('admin_requests_count', { count: item.count })}</span>
             </div>
           ))}
-          {trends.requested.length === 0 && <p className="text-slate-400 text-sm italic">No data available</p>}
+          {trends.requested.length === 0 && <p className="text-slate-400 text-sm italic">{t('admin_no_data')}</p>}
         </div>
       </div>
     </div>
@@ -538,8 +538,8 @@ export const AdminDashboard = () => {
             <Shield size={28} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Admin Control Panel</h1>
-            <p className="text-slate-500">Platform Management & Moderation</p>
+            <h1 className="text-3xl font-bold text-slate-900">{t('admin_control_panel')}</h1>
+            <p className="text-slate-500">{t('admin_management_tagline')}</p>
           </div>
         </div>
 
@@ -549,11 +549,11 @@ export const AdminDashboard = () => {
         {/* Tabs */}
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {[
-            { id: 'pending', label: 'Pending Items', icon: Package },
-            { id: 'pharmacies', label: 'Pharmacies', icon: Users },
-            { id: 'admins', label: 'Admins', icon: Shield },
-            { id: 'marketplace', label: 'Marketplace', icon: Store },
-            { id: 'ratings', label: 'Ratings', icon: Star }
+            { id: 'pending', label: t('admin_pending_items'), icon: Package },
+            { id: 'pharmacies', label: t('admin_pharmacies'), icon: Users },
+            { id: 'admins', label: t('admin_admins'), icon: Shield },
+            { id: 'marketplace', label: t('admin_marketplace'), icon: Store },
+            { id: 'ratings', label: t('admin_ratings'), icon: Star }
           ].map(tab => (
             <button
               key={tab.id}
@@ -576,7 +576,7 @@ export const AdminDashboard = () => {
           {loading && (
             <div className="p-20 flex flex-col items-center justify-center gap-4">
               <Loader2 className="animate-spin text-primary" size={48} />
-              <p className="text-slate-500 font-medium">Loading data...</p>
+              <p className="text-slate-500 font-medium">{t('admin_loading_data')}</p>
             </div>
           )}
 
@@ -585,11 +585,11 @@ export const AdminDashboard = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Item Details</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Brand</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Price</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Barcode</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_item_details')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_brand')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_price')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_barcode')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">{t('admin_actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -600,21 +600,21 @@ export const AdminDashboard = () => {
                         <div className="text-sm text-slate-500">{item.arabic_name}</div>
                       </td>
                       <td className="p-4 text-sm text-slate-600">{item.brand}</td>
-                      <td className="p-4 text-sm font-bold text-emerald-600">{item.price} EGP</td>
+                      <td className="p-4 text-sm font-bold text-emerald-600">{item.price} {t('egp')}</td>
                       <td className="p-4 text-xs font-mono text-slate-400">{item.barcode}</td>
                       <td className="p-4">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleApproveItem(item)}
                             className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-all"
-                            title="Approve"
+                            title={t('dashboard_approve')}
                           >
                             <CheckCircle size={20} />
                           </button>
                           <button
                             onClick={() => setConfirmAction({ type: 'delete_pending', id: item.id })}
                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
-                            title="Reject"
+                            title={t('delete')}
                           >
                             <Trash2 size={20} />
                           </button>
@@ -624,7 +624,7 @@ export const AdminDashboard = () => {
                   ))}
                   {pendingItems.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-10 text-center text-slate-400 italic">No pending items to review</td>
+                      <td colSpan={5} className="p-10 text-center text-slate-400 italic">{t('admin_no_pending')}</td>
                     </tr>
                   )}
                 </tbody>
@@ -637,11 +637,11 @@ export const AdminDashboard = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Pharmacy</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Contact</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Location</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Status</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_pharmacy')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_contact')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_location')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_status')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">{t('admin_actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -661,7 +661,7 @@ export const AdminDashboard = () => {
                           "text-[10px] font-bold uppercase px-2 py-1 rounded-full",
                           pharmacy.account_status === 'blacklisted' ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
                         )}>
-                          {pharmacy.account_status || 'active'}
+                          {pharmacy.account_status || t('admin_active')}
                         </span>
                       </td>
                       <td className="p-4">
@@ -672,7 +672,7 @@ export const AdminDashboard = () => {
                               "p-2 rounded-lg transition-all",
                               pharmacy.status ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-blue-50 text-blue-600 hover:bg-blue-100"
                             )}
-                            title={pharmacy.status ? "Deactivate" : "Approve"}
+                            title={pharmacy.status ? t('dashboard_deactivate') : t('dashboard_approve')}
                           >
                             <CheckCircle size={20} />
                           </button>
@@ -682,14 +682,14 @@ export const AdminDashboard = () => {
                               "p-2 rounded-lg transition-all",
                               pharmacy.account_status === 'blacklisted' ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-amber-50 text-amber-600 hover:bg-amber-100"
                             )}
-                            title={pharmacy.account_status === 'blacklisted' ? "Unblacklist" : "Blacklist"}
+                            title={pharmacy.account_status === 'blacklisted' ? t('admin_activate') : t('admin_blacklist')}
                           >
                             <Ban size={20} />
                           </button>
                           <button
                             onClick={() => setConfirmAction({ type: 'delete_pharmacy', id: pharmacy.pharmacy_id })}
                             className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all"
-                            title="Delete Account"
+                            title={t('delete')}
                           >
                             <Trash2 size={20} />
                           </button>
@@ -707,13 +707,13 @@ export const AdminDashboard = () => {
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <UserPlus size={18} className="text-primary" />
-                  Add New System Admin
+                  {t('admin_add_admin')}
                 </h3>
                 <form onSubmit={handleAddAdmin} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <input
                     type="email"
                     required
-                    placeholder="Admin Email"
+                    placeholder={t('admin_admin_email')}
                     value={newAdmin.email}
                     onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
                     className="p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
@@ -721,7 +721,7 @@ export const AdminDashboard = () => {
                   <input
                     type="text"
                     required
-                    placeholder="User UID (from Auth)"
+                    placeholder={t('admin_user_uid')}
                     value={newAdmin.uid}
                     onChange={(e) => setNewAdmin({ ...newAdmin, uid: e.target.value })}
                     className="p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
@@ -731,7 +731,7 @@ export const AdminDashboard = () => {
                     disabled={isAddingAdmin}
                     className="bg-primary text-white font-bold rounded-xl hover:bg-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {isAddingAdmin ? <Loader2 className="animate-spin" /> : <><Plus size={18} /> Add Admin</>}
+                    {isAddingAdmin ? <Loader2 className="animate-spin" /> : <><Plus size={18} /> {t('admin_add_admin_btn')}</>}
                   </button>
                 </form>
               </div>
@@ -740,10 +740,10 @@ export const AdminDashboard = () => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">Admin Email</th>
+                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_admin_email')}</th>
                       <th className="p-4 text-xs font-bold text-slate-500 uppercase">UID</th>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">Added On</th>
-                      <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                      <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_added_on')}</th>
+                      <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">{t('admin_actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -773,16 +773,16 @@ export const AdminDashboard = () => {
               <div>
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <Store size={18} className="text-emerald-500" />
-                  Active Offers
+                  {t('admin_active_offers')}
                 </h3>
                 <div className="overflow-x-auto border border-slate-100 rounded-2xl">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Item</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Pharmacy</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Posted</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_item')}</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_pharmacy')}</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_posted')}</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">{t('admin_actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -812,16 +812,16 @@ export const AdminDashboard = () => {
               <div>
                 <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                   <ClipboardList size={18} className="text-blue-500" />
-                  Active Requests
+                  {t('admin_active_requests')}
                 </h3>
                 <div className="overflow-x-auto border border-slate-100 rounded-2xl">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Item</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Pharmacy</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">Posted</th>
-                        <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_item')}</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_pharmacy')}</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_posted')}</th>
+                        <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">{t('admin_actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -855,11 +855,11 @@ export const AdminDashboard = () => {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200">
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">From → To</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Rating</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Comment</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">Date</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_from_to')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_rating')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_comment')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase">{t('admin_date')}</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">{t('admin_actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -886,7 +886,7 @@ export const AdminDashboard = () => {
                         </div>
                       </td>
                       <td className="p-4 text-sm text-slate-600 max-w-xs truncate" title={rating.comment}>
-                        {rating.comment || <span className="text-slate-300 italic">No comment</span>}
+                        {rating.comment || <span className="text-slate-300 italic">{t('admin_no_comment')}</span>}
                       </td>
                       <td className="p-4 text-xs text-slate-400">
                         {new Date(rating.created_at).toLocaleDateString()}
@@ -903,7 +903,7 @@ export const AdminDashboard = () => {
                   ))}
                   {ratings.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-10 text-center text-slate-400 italic">No ratings found</td>
+                      <td colSpan={5} className="p-10 text-center text-slate-400 italic">{t('admin_no_ratings')}</td>
                     </tr>
                   )}
                 </tbody>

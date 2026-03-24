@@ -72,7 +72,7 @@ export const Terms = () => {
             <ArrowLeft size={24} />
           </button>
           <h1 className="text-3xl font-bold text-slate-900">
-            {i18n.language === 'ar' ? 'الشروط والأحكام' : 'Terms and Conditions'}
+            {t('terms_and_conditions')}
           </h1>
         </div>
         <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
@@ -85,12 +85,12 @@ export const Terms = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
               <Loader2 className="animate-spin text-primary" size={40} />
-              <p className="text-slate-500 font-medium">Loading content...</p>
+              <p className="text-slate-500 font-medium">{t('terms_loading')}</p>
             </div>
           ) : error && !content ? (
             <div className="flex flex-col items-center justify-center py-20 gap-4 text-rose-500">
               <AlertCircle size={40} />
-              <p className="font-medium">Failed to load terms and conditions</p>
+              <p className="font-medium">{t('terms_failed')}</p>
             </div>
           ) : (
             <div className="prose prose-slate max-w-none">
@@ -104,9 +104,7 @@ export const Terms = () => {
 
       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
         <p className="text-sm text-slate-500 text-center">
-          {i18n.language === 'ar' 
-            ? 'آخر تحديث: فبراير 2026' 
-            : 'Last Updated: February 2026'}
+          {t('terms_last_updated')}
         </p>
       </div>
     </div>

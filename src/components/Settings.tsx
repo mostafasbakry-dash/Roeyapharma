@@ -25,12 +25,12 @@ export const Settings = () => {
     e.preventDefault();
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error(i18n.language === 'ar' ? 'كلمات المرور غير متطابقة' : 'Passwords do not match');
+      toast.error(t('settings_pass_mismatch'));
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      toast.error(i18n.language === 'ar' ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters');
+      toast.error(t('settings_pass_min_len'));
       return;
     }
 
@@ -49,7 +49,7 @@ export const Settings = () => {
 
       if (error) throw error;
 
-      toast.success(i18n.language === 'ar' ? 'تم تغيير كلمة المرور بنجاح' : 'Password changed successfully');
+      toast.success(t('settings_pass_success'));
       setPasswordData({ newPassword: '', confirmPassword: '' });
     } catch (err: any) {
       toast.error(t('error_generic'));
@@ -65,7 +65,7 @@ export const Settings = () => {
       <div className="grid grid-cols-1 gap-6">
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="font-bold text-lg text-slate-900">Preferences</h2>
+            <h2 className="font-bold text-lg text-slate-900">{t('settings_preferences')}</h2>
           </div>
           <div className="divide-y divide-slate-100">
             <div className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
@@ -75,7 +75,7 @@ export const Settings = () => {
                 </div>
                 <div>
                   <p className="font-bold text-slate-900">{t('language')}</p>
-                  <p className="text-sm text-slate-500">Switch between Arabic and English</p>
+                  <p className="text-sm text-slate-500">{t('settings_switch_lang')}</p>
                 </div>
               </div>
               <button
@@ -92,8 +92,8 @@ export const Settings = () => {
                   <Bell size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">Notifications</p>
-                  <p className="text-sm text-slate-500">Manage your alert preferences</p>
+                  <p className="font-bold text-slate-900">{t('settings_notifications')}</p>
+                  <p className="text-sm text-slate-500">{t('settings_manage_alerts')}</p>
                 </div>
               </div>
               <div className="relative inline-flex items-center cursor-pointer">
@@ -106,14 +106,14 @@ export const Settings = () => {
 
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="font-bold text-lg text-slate-900">Security</h2>
+            <h2 className="font-bold text-lg text-slate-900">{t('settings_security')}</h2>
           </div>
           <div className="p-6">
             <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase px-1 flex items-center gap-2">
                   <Lock size={14} />
-                  {i18n.language === 'ar' ? 'كلمة المرور الجديدة' : 'New Password'}
+                  {t('settings_new_password')}
                 </label>
                 <input
                   type="password"
@@ -127,7 +127,7 @@ export const Settings = () => {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 uppercase px-1 flex items-center gap-2">
                   <Lock size={14} />
-                  {i18n.language === 'ar' ? 'تأكيد كلمة المرور' : 'Confirm New Password'}
+                  {t('settings_confirm_password')}
                 </label>
                 <input
                   type="password"
@@ -143,7 +143,7 @@ export const Settings = () => {
                 disabled={loading}
                 className="w-full py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : (i18n.language === 'ar' ? 'تحديث كلمة المرور' : 'Update Password')}
+                {loading ? <Loader2 className="animate-spin" size={20} /> : t('settings_update_password')}
               </button>
             </form>
           </div>
@@ -151,7 +151,7 @@ export const Settings = () => {
 
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-100">
-            <h2 className="font-bold text-lg text-slate-900">Support & Legal</h2>
+            <h2 className="font-bold text-lg text-slate-900">{t('settings_support_legal')}</h2>
           </div>
           <div className="divide-y divide-slate-100">
             <button 
@@ -163,8 +163,8 @@ export const Settings = () => {
                   <Shield size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">{i18n.language === 'ar' ? 'الشروط والأحكام' : 'Terms and Conditions'}</p>
-                  <p className="text-sm text-slate-500">{i18n.language === 'ar' ? 'كيف نتعامل مع بياناتك' : 'How we handle your data'}</p>
+                  <p className="font-bold text-slate-900">{t('terms_and_conditions')}</p>
+                  <p className="text-sm text-slate-500">{t('settings_terms_desc')}</p>
                 </div>
               </div>
             </button>
@@ -176,8 +176,8 @@ export const Settings = () => {
                   <HelpCircle size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">Help Center</p>
-                  <p className="text-sm text-slate-500">FAQs and contact support</p>
+                  <p className="font-bold text-slate-900">{t('settings_help_center')}</p>
+                  <p className="text-sm text-slate-500">{t('settings_faqs')}</p>
                 </div>
               </div>
             </button>
@@ -189,8 +189,8 @@ export const Settings = () => {
                   <Info size={24} />
                 </div>
                 <div>
-                  <p className="font-bold text-slate-900">About Roeya</p>
-                  <p className="text-sm text-slate-500">Version 1.0.0</p>
+                  <p className="font-bold text-slate-900">{t('settings_about')}</p>
+                  <p className="text-sm text-slate-500">{t('settings_version')} 1.0.0</p>
                 </div>
               </div>
             </button>

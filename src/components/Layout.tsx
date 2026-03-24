@@ -174,7 +174,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-100">
               {!logoError ? (
                 <img 
-                  src="/logo.png" 
+                  src="https://ncpqhkoljjikqrgtelbv.supabase.co/storage/v1/object/public/logo/logo.png" 
                   alt="Roeya Logo" 
                   className="w-full h-full object-contain" 
                   referrerPolicy="no-referrer"

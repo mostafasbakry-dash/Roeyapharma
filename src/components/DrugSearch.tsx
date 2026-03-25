@@ -12,7 +12,7 @@ interface DrugSearchProps {
   className?: string;
 }
 
-export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProps) => {
+export const DrugSearch = React.forwardRef<HTMLInputElement, DrugSearchProps>(({ onSelect, onAddMissing, className }, ref) => {
   const { t, i18n } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Drug[]>([]);
@@ -117,6 +117,7 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
         <input
+          ref={ref}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -185,4 +186,6 @@ export const DrugSearch = ({ onSelect, onAddMissing, className }: DrugSearchProp
       )}
     </div>
   );
-};
+});
+
+DrugSearch.displayName = 'DrugSearch';

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Star, X, Loader2, MessageSquare } from 'lucide-react';
 import { getSupabase } from '@/src/lib/supabase';
 import { toast } from 'react-hot-toast';
-import { cn } from '@/src/lib/utils';
+import { cn, formatQuantity } from '@/src/lib/utils';
 
 interface RatingModalProps {
   isOpen: boolean;
@@ -11,6 +11,8 @@ interface RatingModalProps {
   ratedPharmacyId: string;
   ratedPharmacyName: string;
   relatedItemId: string;
+  quantity?: number;
+  strips_count?: number;
   onSuccess?: () => void;
 }
 
@@ -20,6 +22,8 @@ export const RatingModal = ({
   ratedPharmacyId, 
   ratedPharmacyName, 
   relatedItemId,
+  quantity,
+  strips_count,
   onSuccess 
 }: RatingModalProps) => {
   const { t, i18n } = useTranslation();
@@ -44,7 +48,8 @@ export const RatingModal = ({
           from_pharmacy_id: Number(raterPharmacyId),
           stars: Number(stars),
           comment,
-          related_item_id: Number(relatedItemId)
+          related_item_id: Number(relatedItemId),
+          quantity: quantity ? Number(quantity) : null
         });
 
       if (error) throw error;
@@ -82,6 +87,11 @@ export const RatingModal = ({
           <div className="text-center space-y-2">
             <p className="text-slate-500">{t('rating_question', { name: ratedPharmacyName })}</p>
             <h3 className="text-lg font-bold text-slate-900">{ratedPharmacyName}</h3>
+            {quantity !== undefined && (
+              <p className="text-xs text-slate-400">
+                {t('quantity')}: {formatQuantity(quantity, strips_count || 0, i18n)}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-center gap-2">

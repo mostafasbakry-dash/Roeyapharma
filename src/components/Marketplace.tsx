@@ -5,7 +5,7 @@ import { Search, Filter, SlidersHorizontal, MapPin, Percent, X, Loader2, Phone, 
 import { Offer, Request as MarketRequest, EGYPT_CITIES } from '@/src/types';
 import { OfferCard } from '@/src/components/OfferCard';
 import { RatingModal } from '@/src/components/RatingModal';
-import { cn, getDistance } from '@/src/lib/utils';
+import { cn, getDistance, formatQuantity } from '@/src/lib/utils';
 import { toast } from 'react-hot-toast';
 import { getSupabase } from '@/src/lib/supabase';
 
@@ -26,65 +26,20 @@ export const Marketplace = () => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [transferModalItem, setTransferModalItem] = useState<any | null>(null);
   const [transferQuantity, setTransferQuantity] = useState(1);
+  const [transferStrips, setTransferStrips] = useState(0);
   const [ratingItem, setRatingItem] = useState<any | null>(null);
   const [error, setError] = useState<any>(null);
 
   const userProfile = JSON.parse(localStorage.getItem('pharmacy_profile') || '{}');
   const [loading, setLoading] = useState(true);
 
-  const confirmTransaction = async (item: any, quantity: number) => {
-    setLoading(true);
-    try {
-      const supabase = getSupabase();
-      if (!supabase) return;
-
-      const isFullSale = quantity >= item.quantity;
-
-      // 2. Insert into sales_archive
-      // The DB Trigger (SECURITY DEFINER) will handle the deduction/deletion 
-      // from inventory_offers/inventory_requests automatically.
-      const { error: archiveError } = await supabase
-        .from('sales_archive')
-        .insert([{
-          pharmacy_id: item.pharmacy_id, // Keep as is, Supabase handles bigint strings
-          item_id: item.id,             // Keep as is
-          arabic_name: item.arabic_name,
-          english_name: item.english_name,
-          barcode: item.barcode,
-          quantity: quantity,
-          price: item.price || 0,
-          discount: item.discount || 0,
-          created_at: new Date().toISOString(),
-          action_type: viewType === 'offers' ? 'Marketplace Sale' : 'Marketplace Request Filled'
-        }]);
-
-      if (archiveError) throw archiveError;
-
-      // 3. UI Update (Optimistic)
-      if (isFullSale) {
-        setItems(prev => prev.filter(i => i.id !== item.id));
-        setFilteredItems(prev => prev.filter(i => i.id !== item.id));
-      } else {
-        const updateList = (list: any[]) => list.map(i => 
-          i.id === item.id ? { ...i, quantity: i.quantity - quantity } : i
-        );
-        setItems(updateList);
-        setFilteredItems(updateList);
-      }
-
-      toast.success(t('transaction_confirmed_success'));
-      
-      setTransferModalItem(null);
-      setRatingItem(item);
-      // Add a small delay to allow the background DB trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
-      fetchData();
-      
-    } catch (err) {
-      toast.error(t('error_generic'));
-    } finally {
-      setLoading(false);
-    }
+  const confirmTransaction = (item: any, quantity: number, stripsCount: number) => {
+    // SECURITY FIX: Submitting a rating should ONLY affect the ratings table. 
+    // It must NOT change the quantity or the status of any items in the marketplace.
+    // The pharmacist who owns the offer is the only one who should have the right to update or delete their stock.
+    
+    setTransferModalItem(null);
+    setRatingItem({ ...item, handledQuantity: quantity, handledStrips: stripsCount });
   };
 
   useEffect(() => {
@@ -421,6 +376,8 @@ export const Marketplace = () => {
           ratedPharmacyId={ratingItem.pharmacy_id}
           ratedPharmacyName={ratingItem.pharmacies?.pharmacy_name || ratingItem.pharmacy_name || ''}
           relatedItemId={ratingItem.id}
+          quantity={ratingItem.handledQuantity}
+          strips_count={ratingItem.handledStrips}
           onSuccess={fetchData}
         />
       )}
@@ -445,22 +402,37 @@ export const Marketplace = () => {
                   {transferModalItem.english_name}
                 </h3>
                 <p className="text-sm text-slate-500">
-                  {t('available_quantity')} {transferModalItem.quantity}
+                  {t('available_quantity')} {formatQuantity(transferModalItem.quantity, transferModalItem.strips_count || 0, i18n)}
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">
-                  {t('quantity_to_transfer')}
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max={transferModalItem.quantity}
-                  value={transferQuantity}
-                  onChange={(e) => setTransferQuantity(Math.min(transferModalItem.quantity, Math.max(1, parseInt(e.target.value) || 0)))}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">
+                    {isRtl ? 'علبة' : 'Packs'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={transferModalItem.quantity}
+                    value={transferQuantity}
+                    onChange={(e) => setTransferQuantity(Math.min(transferModalItem.quantity, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">
+                    {isRtl ? 'وحدة' : 'Units'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max={transferModalItem.strips_count}
+                    value={transferStrips}
+                    onChange={(e) => setTransferStrips(Math.min(transferModalItem.strips_count || 0, Math.max(0, parseInt(e.target.value) || 0)))}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3">
@@ -471,8 +443,8 @@ export const Marketplace = () => {
                   {t('cancel')}
                 </button>
                 <button
-                  onClick={() => confirmTransaction(transferModalItem, transferQuantity)}
-                  disabled={loading || transferQuantity <= 0 || transferQuantity > transferModalItem.quantity}
+                  onClick={() => confirmTransaction(transferModalItem, transferQuantity, transferStrips)}
+                  disabled={loading || (transferQuantity <= 0 && transferStrips <= 0) || (transferQuantity > transferModalItem.quantity) || (transferStrips > (transferModalItem.strips_count || 0))}
                   className="flex-1 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('confirm')}

@@ -34,6 +34,7 @@ export interface Offer {
   discount: number;
   price: number;
   quantity: number;
+  strips_count?: number;
   pharmacy_name: string;
   pharmacy_address: string;
   created_at: string;
@@ -59,5 +60,6 @@ export interface Request {
   arabic_name: string;
   barcode: string;
   quantity: number;
+  strips_count?: number;
   created_at: string;
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Calendar, Tag, MapPin, Building2, ArrowRight, Star, ShieldCheck } from 'lucide-react';
 import { Offer } from '@/src/types';
-import { formatCurrency, cn } from '@/src/lib/utils';
+import { formatCurrency, cn, formatQuantity } from '@/src/lib/utils';
 import { format } from 'date-fns';
 
 interface OfferCardProps {
@@ -54,7 +54,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
               </div>
             )}
             <div className="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
-              {t('quantity')}: {offer.quantity}
+              {t('quantity')}: {formatQuantity(offer.quantity, offer.strips_count, i18n)}
             </div>
           </div>
         </div>

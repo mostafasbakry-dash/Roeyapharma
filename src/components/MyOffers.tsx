@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Package, Plus, Trash2, Edit2, Loader2, AlertCircle, X, ShieldCheck, Info, MinusCircle, PlusCircle, CheckCircle2, RefreshCw } from 'lucide-react';
@@ -7,7 +7,7 @@ import { DrugSearch } from '@/src/components/DrugSearch';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { BulkUpload } from '@/src/components/BulkUpload';
-import { cn, getExpiryStatus } from '@/src/lib/utils';
+import { cn, getExpiryStatus, formatQuantity } from '@/src/lib/utils';
 import { getSupabase } from '@/src/lib/supabase';
 import { AddMissingItemModal } from './AddMissingItemModal';
 
@@ -26,15 +26,19 @@ export const MyOffers = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [showDeductActionModal, setShowDeductActionModal] = useState(false);
+  const [showDuplicateConfirmModal, setShowDuplicateConfirmModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [quantityAction, setQuantityAction] = useState<'add' | 'deduct' | null>(null);
   const [quantityValue, setQuantityValue] = useState(1);
+  const [stripsValue, setStripsValue] = useState(0);
   const [editData, setEditData] = useState({ price: 0, discount: 0 });
   const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
+  const drugSearchRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     expiry_date: '',
-    discount: 20,
+    discount: 35,
     quantity: 1,
+    strips_count: 0,
     price: 0
   });
 
@@ -51,7 +55,7 @@ export const MyOffers = () => {
 
       const { data, error: fetchError } = await supabase
         .from('inventory_offers')
-        .select('arabic_name, english_name, pharmacy_id, expiry_date, price, quantity, barcode, discount, created_at, id')
+        .select('arabic_name, english_name, pharmacy_id, expiry_date, price, quantity, strips_count, barcode, discount, created_at, id')
         .eq('pharmacy_id', pharmacy_id)
         .order('created_at', { ascending: false });
 
@@ -71,30 +75,59 @@ export const MyOffers = () => {
     fetchOffers();
   }, [fetchOffers]);
 
-  const handleAddOffer = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddOffer = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!selectedDrug) return;
 
-    // Check for duplicates (Barcode + Expiry)
-    const duplicate = offers.find(o => o.barcode === selectedDrug.barcode && o.expiry_date === formData.expiry_date);
-    if (duplicate) {
-      if (!window.confirm(t('warning_duplicate'))) return;
+    const normalizedBarcode = selectedDrug.barcode ? selectedDrug.barcode.toString().replace(/\D/g, '') : "0";
+    const pharmacy_id_str = localStorage.getItem('pharmacy_id') || '';
+    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    const pharmacy_id = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
+
+    // Check for duplicates (Barcode + Expiry + Pharmacy)
+    setLoading(true);
+    try {
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase not initialized');
+
+      let query = supabase
+        .from('inventory_offers')
+        .select('id')
+        .eq('barcode', normalizedBarcode)
+        .eq('expiry_date', formData.expiry_date.length === 7 ? `${formData.expiry_date}-01` : formData.expiry_date);
+      
+      if (pharmacy_id !== null) {
+        query = query.eq('pharmacy_id', pharmacy_id);
+      } else {
+        query = query.is('pharmacy_id', null);
+      }
+
+      const { data: existingOffer, error: checkError } = await query.maybeSingle();
+      if (checkError) throw checkError;
+
+      if (existingOffer) {
+        setShowDuplicateConfirmModal(true);
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error('Duplicate check error:', err);
+    } finally {
+      setLoading(false);
     }
 
     setLoading(true);
     try {
-      const pharmacy_id_str = localStorage.getItem('pharmacy_id');
-      const pharmacy_id = pharmacy_id_str ? parseInt(pharmacy_id_str) : 0;
-      
       const payload = {
         expiry_date: formData.expiry_date,
-        pharmacy_id: pharmacy_id,
+        pharmacy_id: pharmacy_id || 0,
         drug_id: selectedDrug.id,
         english_name: selectedDrug.name_en || '',
         arabic_name: selectedDrug.name_ar || '',
         manufacturer: selectedDrug.manufacturer || '',
-        barcode: selectedDrug.barcode ? selectedDrug.barcode.toString().replace(/\D/g, '') : "0",
+        barcode: normalizedBarcode,
         quantity: formData.quantity,
+        strips_count: formData.strips_count,
         price: formData.price,
         discount: formData.discount
       };
@@ -108,9 +141,26 @@ export const MyOffers = () => {
       if (!response.ok) throw new Error('Failed to add offer');
 
       toast.success(t('success_added'));
-      setShowAddModal(false);
+      
+      // Reset form fields to initial state
+      setFormData({
+        expiry_date: '',
+        discount: 35,
+        quantity: 1,
+        strips_count: 0,
+        price: 0
+      });
       setSelectedDrug(null);
+      setShowDuplicateConfirmModal(false);
       fetchOffers(); // Refresh the list
+
+      // Focus back to search input
+      setTimeout(() => {
+        drugSearchRef.current?.focus();
+      }, 100);
+
+      // We don't close the modal to allow adding more items
+      // setShowAddModal(false);
     } catch (err) {
       toast.error(t('error_generic'));
     } finally {
@@ -127,7 +177,7 @@ export const MyOffers = () => {
     }
   };
 
-  const archiveItem = async (offer: Offer, quantity: number, actionType: string) => {
+  const archiveItem = async (offer: Offer, quantity: number, stripsCount: number, actionType: string) => {
     const supabase = getSupabase();
     if (!supabase) return false;
 
@@ -141,6 +191,7 @@ export const MyOffers = () => {
           english_name: offer.english_name,
           barcode: offer.barcode,
           quantity: quantity,
+          strips_count: stripsCount,
           price: offer.price,
           discount: offer.discount,
           created_at: new Date().toISOString(),
@@ -162,27 +213,30 @@ export const MyOffers = () => {
 
   const handleFullCancel = async (actionType: string) => {
     if (!selectedOffer) return;
+    const supabase = getSupabase();
+    if (!supabase) return;
+
     setLoading(true);
     try {
-      // Optimistic Update
-      const removedId = selectedOffer.id;
-      setOffers(prev => prev.filter(o => o.id !== removedId));
-
-      const success = await archiveItem(selectedOffer, selectedOffer.quantity, actionType);
+      const success = await archiveItem(selectedOffer, selectedOffer.quantity, selectedOffer.strips_count || 0, actionType);
       if (success) {
+        // Explicitly delete from inventory_offers using unique ID
+        const { error: deleteError } = await supabase
+          .from('inventory_offers')
+          .delete()
+          .eq('id', selectedOffer.id);
+
+        if (deleteError) throw deleteError;
+
+        // Update local state immediately using unique ID
+        setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
         toast.success(t('dashboard_archive_success'));
         setShowCancelModal(false);
         setSelectedOffer(null);
-        // Add a small delay to allow the background DB trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-        fetchOffers();
-      } else {
-        // Rollback if failed
-        fetchOffers();
       }
     } catch (err) {
+      console.error('Cancel error:', err);
       toast.error(t('error_generic'));
-      fetchOffers();
     } finally {
       setLoading(false);
     }
@@ -196,7 +250,7 @@ export const MyOffers = () => {
       if (!supabase) return;
 
       // Archive as Cancelled before deleting to prevent incorrect activity records
-      await archiveItem(selectedOffer, selectedOffer.quantity, isRtl ? 'ملغي' : 'Cancelled');
+      await archiveItem(selectedOffer, selectedOffer.quantity, selectedOffer.strips_count || 0, isRtl ? 'ملغي' : 'Cancelled');
 
       const { error: deleteError } = await supabase
         .from('inventory_offers')
@@ -205,11 +259,13 @@ export const MyOffers = () => {
 
       if (deleteError) throw deleteError;
 
+      // Update local state immediately using unique ID
+      setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
       toast.success(t('dashboard_delete_success'));
       setShowCancelModal(false);
       setSelectedOffer(null);
-      fetchOffers();
     } catch (err) {
+      console.error('Delete error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -224,20 +280,29 @@ export const MyOffers = () => {
       try {
         const supabase = getSupabase();
         if (supabase) {
-          const newQty = selectedOffer.quantity + quantityValue;
+          const newQty = (selectedOffer.quantity || 0) + quantityValue;
+          const newStrips = (selectedOffer.strips_count || 0) + stripsValue;
           const { error: updateError } = await supabase
             .from('inventory_offers')
-            .update({ quantity: newQty })
+            .update({ 
+              quantity: newQty,
+              strips_count: newStrips
+            })
             .eq('id', selectedOffer.id);
           
           if (updateError) throw updateError;
           
+          // Update local state immediately using unique ID
+          setOffers(prev => prev.map(o => 
+            o.id === selectedOffer.id ? { ...o, quantity: newQty, strips_count: newStrips } : o
+          ));
+          
           toast.success(t('dashboard_qty_update_success'));
           setShowQuantityModal(false);
           setSelectedOffer(null);
-          fetchOffers();
         }
       } catch (err) {
+        console.error('Update quantity error:', err);
         toast.error(t('error_generic'));
       } finally {
         setLoading(false);
@@ -251,18 +316,51 @@ export const MyOffers = () => {
 
   const handleDeductArchive = async (actionType: string) => {
     if (!selectedOffer) return;
+    const supabase = getSupabase();
+    if (!supabase) return;
+
     setLoading(true);
     try {
-      const success = await archiveItem(selectedOffer, quantityValue, actionType);
+      const success = await archiveItem(selectedOffer, quantityValue, stripsValue, actionType);
       if (success) {
+        const newQty = (selectedOffer.quantity || 0) - quantityValue;
+        const newStrips = (selectedOffer.strips_count || 0) - stripsValue;
+        
+        if (newQty > 0 || newStrips > 0) {
+          // Explicitly update quantity in inventory_offers using unique ID
+          const { error: updateError } = await supabase
+            .from('inventory_offers')
+            .update({ 
+              quantity: Math.max(0, newQty),
+              strips_count: Math.max(0, newStrips)
+            })
+            .eq('id', selectedOffer.id);
+
+          if (updateError) throw updateError;
+
+          // Update local state immediately using unique ID
+          setOffers(prev => prev.map(o => 
+            o.id === selectedOffer.id ? { ...o, quantity: Math.max(0, newQty), strips_count: Math.max(0, newStrips) } : o
+          ));
+        } else {
+          // If quantity becomes 0, delete it
+          const { error: deleteError } = await supabase
+            .from('inventory_offers')
+            .delete()
+            .eq('id', selectedOffer.id);
+
+          if (deleteError) throw deleteError;
+
+          // Update local state immediately using unique ID
+          setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
+        }
+
         toast.success(t('dashboard_archive_success'));
         setShowDeductActionModal(false);
         setSelectedOffer(null);
-        // Add a small delay to allow the background DB trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-        fetchOffers();
       }
     } catch (err) {
+      console.error('Deduct error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -286,12 +384,17 @@ export const MyOffers = () => {
         
         if (updateError) throw updateError;
         
+        // Update local state immediately using unique ID
+        setOffers(prev => prev.map(o => 
+          o.id === selectedOffer.id ? { ...o, price: editData.price, discount: editData.discount } : o
+        ));
+        
         toast.success(t('dashboard_update_success'));
         setShowEditModal(false);
         setSelectedOffer(null);
-        fetchOffers();
       }
     } catch (err) {
+      console.error('Edit offer error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -367,14 +470,17 @@ export const MyOffers = () => {
                       <span className="font-bold text-primary">{offer.discount}%</span>
                     </td>
                     <td className="px-6 py-4 font-bold">{offer.price} {t('egp')}</td>
-                    <td className="px-6 py-4">{offer.quantity}</td>
+                    <td className="px-6 py-4 font-bold text-slate-700">
+                      {formatQuantity(offer.quantity, offer.strips_count || 0, i18n)}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex justify-center gap-2">
                         <button 
                           onClick={() => {
                             setSelectedOffer(offer);
                             setQuantityAction(null);
-                            setQuantityValue(1);
+                            setQuantityValue(0);
+                            setStripsValue(0);
                             setShowQuantityModal(true);
                           }}
                           className="p-2 text-slate-400 hover:text-indigo-500 transition-colors"
@@ -425,6 +531,13 @@ export const MyOffers = () => {
                 onClick={() => {
                   setShowAddModal(false);
                   setSelectedDrug(null);
+                  setFormData({
+                    expiry_date: '',
+                    discount: 35,
+                    quantity: 1,
+                    strips_count: 0,
+                    price: 0
+                  });
                 }} 
                 className="hover:bg-white/20 p-1 rounded-lg"
               >
@@ -437,6 +550,7 @@ export const MyOffers = () => {
                 <label className="text-xs font-bold text-slate-500 uppercase">{t('search_drug')}</label>
                 {!selectedDrug ? (
                   <DrugSearch 
+                    ref={drugSearchRef}
                     onSelect={(drug) => {
                       setSelectedDrug(drug);
                       setFormData({ ...formData, price: drug.price || 0 });
@@ -514,13 +628,24 @@ export const MyOffers = () => {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">{t('quantity')}</label>
+                    <label className="text-xs font-bold text-slate-500 uppercase">{isRtl ? 'علبة' : 'Packs'}</label>
                     <input
                       type="number"
                       required
-                      min="1"
+                      min="0"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                      className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-500 uppercase">{isRtl ? 'وحدة' : 'Units'}</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={formData.strips_count}
+                      onChange={(e) => setFormData({ ...formData, strips_count: parseInt(e.target.value) || 0 })}
                       className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm"
                     />
                   </div>
@@ -681,21 +806,36 @@ export const MyOffers = () => {
 
               {quantityAction && (
                 <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">{t('quantity')}</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      max={quantityAction === 'deduct' ? selectedOffer.quantity : undefined}
-                      value={quantityValue}
-                      onChange={(e) => setQuantityValue(parseInt(e.target.value) || 1)}
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase">{isRtl ? 'علبة' : 'Packs'}</label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        max={quantityAction === 'deduct' ? selectedOffer.quantity : undefined}
+                        value={quantityValue}
+                        onChange={(e) => setQuantityValue(parseInt(e.target.value) || 0)}
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase">{isRtl ? 'وحدة' : 'Units'}</label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        max={quantityAction === 'deduct' ? selectedOffer.strips_count : undefined}
+                        value={stripsValue}
+                        onChange={(e) => setStripsValue(parseInt(e.target.value) || 0)}
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
                   </div>
                   <button
                     onClick={handleUpdateQuantity}
-                    className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20"
+                    disabled={quantityValue === 0 && stripsValue === 0}
+                    className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
                   >
                     {t('dashboard_continue')}
                   </button>
@@ -720,7 +860,7 @@ export const MyOffers = () => {
               <Info size={32} />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('archive_question')}</h2>
-            <p className="text-slate-500 mb-8">{t('dashboard_archive_units', { count: quantityValue })}</p>
+            <p className="text-slate-500 mb-8">{formatQuantity(quantityValue, stripsValue, i18n)}</p>
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleDeductArchive(t('archive_internal_sale'))}
@@ -750,6 +890,29 @@ export const MyOffers = () => {
           onClose={() => setShowMissingModal(false)} 
           initialQuery={missingItemQuery}
         />
+      )}
+
+      {/* Duplicate Warning Modal */}
+      {showDuplicateConfirmModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in duration-200">
+            <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertCircle size={32} />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">{i18n.language === 'ar' ? 'تنبيه' : 'Warning'}</h2>
+            <p className="text-slate-500 mb-8">
+              {i18n.language === 'ar' 
+                ? 'هذا الصنف متوفر بالفعل في عروضك بنفس تاريخ الصلاحية. يمكنك تعديل الكمية من صفحة "عروضي" بدلاً من إضافة عرض جديد.'
+                : 'This item already exists in your offers with the same expiry date. You can adjust its quantity in "My Offers" instead of adding a new one.'}
+            </p>
+            <button
+              onClick={() => setShowDuplicateConfirmModal(false)}
+              className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all"
+            >
+              {i18n.language === 'ar' ? 'إغلاق' : 'Close'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

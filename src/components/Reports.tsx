@@ -20,7 +20,7 @@ import {
   Legend
 } from 'recharts';
 import { getSupabase } from '@/src/lib/supabase';
-import { cn } from '@/src/lib/utils';
+import { cn, formatQuantity } from '@/src/lib/utils';
 import { startOfDay, startOfWeek, startOfMonth, isAfter, format, parseISO } from 'date-fns';
 
 type TimeFilter = 'today' | 'week' | 'month' | 'all';
@@ -211,7 +211,7 @@ export const Reports = () => {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="px-3 py-1 bg-slate-100 rounded-full text-sm font-bold text-slate-700">
-                        {item.quantity}
+                        {formatQuantity(item.quantity, item.strips_count || 0, i18n)}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-center">

@@ -6,8 +6,9 @@ import { Request as MarketRequest, Drug } from '@/src/types';
 import { DrugSearch } from '@/src/components/DrugSearch';
 import { toast } from 'react-hot-toast';
 import { getSupabase } from '@/src/lib/supabase';
-import { cn } from '@/src/lib/utils';
+import { cn, formatQuantity } from '@/src/lib/utils';
 import { AddMissingItemModal } from './AddMissingItemModal';
+import { AddRequestModal } from './AddRequestModal';
 
 export const MyRequests = () => {
   const { t, i18n } = useTranslation();
@@ -27,16 +28,19 @@ export const MyRequests = () => {
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [quantityAction, setQuantityAction] = useState<'add' | 'deduct' | null>(null);
   const [quantityValue, setQuantityValue] = useState(1);
-  const [editData, setEditData] = useState({ quantity: 1 });
-
-  const [selectedDrug, setSelectedDrug] = useState<Drug | null>(null);
-  const [quantity, setQuantity] = useState(1);
+  const [stripsValue, setStripsValue] = useState(0);
+  const [editData, setEditData] = useState({ quantity: 1, strips_count: 0 });
 
   const pharmacy_id_str = localStorage.getItem('pharmacy_id') || '';
-  const pharmacy_id = pharmacy_id_str === 'admin' ? '' : pharmacy_id_str;
+  const isAdmin = localStorage.getItem('is_admin') === 'true';
+  const pharmacy_id = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
 
   const fetchRequests = useCallback(async () => {
-    if (!pharmacy_id) return;
+    if (pharmacy_id === null || isNaN(pharmacy_id)) {
+      setLoading(false);
+      return;
+    }
+    
     setLoading(true);
     setError(null);
     try {
@@ -45,12 +49,12 @@ export const MyRequests = () => {
 
       const { data, error: fetchError } = await supabase
         .from('inventory_requests')
-        .select('arabic_name, english_name, pharmacy_id, quantity, barcode, created_at, id')
+        .select('*')
         .eq('pharmacy_id', pharmacy_id)
         .order('created_at', { ascending: false });
 
       if (fetchError) {
-        // Silent fail
+        throw fetchError;
       }
       setRequests(data || []);
     } catch (err) {
@@ -65,44 +69,6 @@ export const MyRequests = () => {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleAddRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDrug) return;
-
-    setLoading(true);
-    try {
-      const pharmacy_id_str = localStorage.getItem('pharmacy_id');
-      const pharmacy_id = pharmacy_id_str ? parseInt(pharmacy_id_str) : 0;
-      
-      const payload = {
-        pharmacy_id: pharmacy_id,
-        drug_id: selectedDrug.id,
-        english_name: selectedDrug.name_en,
-        arabic_name: selectedDrug.name_ar,
-        barcode: selectedDrug.barcode ? selectedDrug.barcode.toString().replace(/\D/g, '') : "0",
-        quantity: quantity
-      };
-
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/add-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload }),
-      });
-
-      if (!response.ok) throw new Error('Failed to add request');
-
-      toast.success(t('success_added'));
-      setShowAddModal(false);
-      setSelectedDrug(null);
-      setQuantity(1);
-      fetchRequests(); // Refresh the list
-    } catch (err) {
-      toast.error(t('error_generic'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteRequest = async (id: string) => {
     const request = requests.find(r => r.id === id);
     if (request) {
@@ -111,7 +77,7 @@ export const MyRequests = () => {
     }
   };
 
-  const archiveItem = async (request: any, quantity: number, actionType: string) => {
+  const archiveItem = async (request: any, quantity: number, stripsCount: number, actionType: string) => {
     const supabase = getSupabase();
     if (!supabase) return false;
 
@@ -125,6 +91,7 @@ export const MyRequests = () => {
           english_name: request.english_name,
           barcode: request.barcode,
           quantity: quantity,
+          strips_count: stripsCount,
           price: 0, // Requests don't have price
           discount: 0, // Requests don't have discount
           created_at: new Date().toISOString(),
@@ -146,25 +113,31 @@ export const MyRequests = () => {
     if (!selectedRequest) return;
     setLoading(true);
     try {
-      // Optimistic Update
-      const removedId = selectedRequest.id;
-      setRequests(prev => prev.filter(r => r.id !== removedId));
+      const supabase = getSupabase();
+      if (!supabase) return;
 
-      const success = await archiveItem(selectedRequest, selectedRequest.quantity, actionType);
+      // 1. Explicitly delete from inventory_requests
+      const { error: deleteError } = await supabase
+        .from('inventory_requests')
+        .delete()
+        .eq('id', selectedRequest.id);
+      
+      if (deleteError) throw deleteError;
+
+      // 2. Archive the item
+      const success = await archiveItem(selectedRequest, selectedRequest.quantity, selectedRequest.strips_count || 0, actionType);
+      
       if (success) {
+        // 3. UI Update (Optimistic)
+        const removedId = selectedRequest.id;
+        setRequests(prev => prev.filter(r => r.id !== removedId));
+        
         toast.success(t('dashboard_archive_success'));
         setShowCancelModal(false);
         setSelectedRequest(null);
-        // Add a small delay to allow the background DB trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-        fetchRequests();
-      } else {
-        // Rollback if failed
-        fetchRequests();
       }
     } catch (err) {
       toast.error(t('error_generic'));
-      fetchRequests();
     } finally {
       setLoading(false);
     }
@@ -178,18 +151,26 @@ export const MyRequests = () => {
       try {
         const supabase = getSupabase();
         if (supabase) {
-          const newQty = selectedRequest.quantity + quantityValue;
+          const newQty = (selectedRequest.quantity || 0) + quantityValue;
+          const newStrips = (selectedRequest.strips_count || 0) + stripsValue;
           const { error: updateError } = await supabase
             .from('inventory_requests')
-            .update({ quantity: newQty })
+            .update({ 
+              quantity: newQty,
+              strips_count: newStrips
+            })
             .eq('id', selectedRequest.id);
           
           if (updateError) throw updateError;
           
+          // UI Update (Optimistic)
+          setRequests(prev => prev.map(r => 
+            r.id === selectedRequest.id ? { ...r, quantity: newQty, strips_count: newStrips } : r
+          ));
+          
           toast.success(t('dashboard_qty_update_success'));
           setShowQuantityModal(false);
           setSelectedRequest(null);
-          fetchRequests();
         }
       } catch (err) {
         toast.error(t('error_generic'));
@@ -206,14 +187,46 @@ export const MyRequests = () => {
     if (!selectedRequest) return;
     setLoading(true);
     try {
-      const success = await archiveItem(selectedRequest, quantityValue, actionType);
+      const supabase = getSupabase();
+      if (!supabase) return;
+
+      const newQty = (selectedRequest.quantity || 0) - quantityValue;
+      const newStrips = (selectedRequest.strips_count || 0) - stripsValue;
+      
+      // 1. Explicitly update or delete from inventory_requests
+      if (newQty <= 0 && newStrips <= 0) {
+        const { error: deleteError } = await supabase
+          .from('inventory_requests')
+          .delete()
+          .eq('id', selectedRequest.id);
+        if (deleteError) throw deleteError;
+      } else {
+        const { error: updateError } = await supabase
+          .from('inventory_requests')
+          .update({ 
+            quantity: Math.max(0, newQty),
+            strips_count: Math.max(0, newStrips)
+          })
+          .eq('id', selectedRequest.id);
+        if (updateError) throw updateError;
+      }
+
+      // 2. Archive the item
+      const success = await archiveItem(selectedRequest, quantityValue, stripsValue, actionType);
+      
       if (success) {
+        // 3. UI Update (Optimistic)
+        if (newQty <= 0 && newStrips <= 0) {
+          setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
+        } else {
+          setRequests(prev => prev.map(r => 
+            r.id === selectedRequest.id ? { ...r, quantity: Math.max(0, newQty), strips_count: Math.max(0, newStrips) } : r
+          ));
+        }
+        
         toast.success(t('dashboard_archive_success'));
         setShowDeductActionModal(false);
         setSelectedRequest(null);
-        // Add a small delay to allow the background DB trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 500));
-        fetchRequests();
       }
     } catch (err) {
       toast.error(t('error_generic'));
@@ -231,15 +244,22 @@ export const MyRequests = () => {
       if (supabase) {
         const { error: updateError } = await supabase
           .from('inventory_requests')
-          .update({ quantity: editData.quantity })
+          .update({ 
+            quantity: editData.quantity,
+            strips_count: editData.strips_count
+          })
           .eq('id', selectedRequest.id);
         
         if (updateError) throw updateError;
         
+        // UI Update (Optimistic)
+        setRequests(prev => prev.map(r => 
+          r.id === selectedRequest.id ? { ...r, quantity: editData.quantity, strips_count: editData.strips_count } : r
+        ));
+        
         toast.success(t('dashboard_update_success'));
         setShowEditModal(false);
         setSelectedRequest(null);
-        fetchRequests();
       }
     } catch (err) {
       toast.error(t('error_generic'));
@@ -284,7 +304,16 @@ export const MyRequests = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {requests.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="animate-spin text-primary" size={32} />
+                      <span className="text-sm text-slate-500">{t('loading')}</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : requests.length > 0 ? (
                 requests.map((request) => (
                   <tr key={request.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
@@ -293,7 +322,9 @@ export const MyRequests = () => {
                         <span className="text-xs text-slate-500">{request.barcode}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-bold">{request.quantity}</td>
+                    <td className="px-6 py-4 font-bold text-slate-700">
+                      {formatQuantity(request.quantity, request.strips_count || 0, i18n)}
+                    </td>
                     <td className="px-6 py-4 text-slate-500 text-sm">
                       {t('dashboard_active')}
                     </td>
@@ -303,7 +334,8 @@ export const MyRequests = () => {
                           onClick={() => {
                             setSelectedRequest(request);
                             setQuantityAction(null);
-                            setQuantityValue(1);
+                            setQuantityValue(0);
+                            setStripsValue(0);
                             setShowQuantityModal(true);
                           }}
                           className="p-2 text-slate-400 hover:text-indigo-500 transition-colors"
@@ -314,7 +346,10 @@ export const MyRequests = () => {
                         <button 
                           onClick={() => {
                             setSelectedRequest(request);
-                            setEditData({ quantity: request.quantity });
+                            setEditData({ 
+                              quantity: request.quantity,
+                              strips_count: request.strips_count || 0
+                            });
                             setShowEditModal(true);
                           }}
                           className="p-2 text-slate-400 hover:text-primary transition-colors"
@@ -346,98 +381,14 @@ export const MyRequests = () => {
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-visible animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">{t('add_request')}</h2>
-              <button 
-                onClick={() => {
-                  setShowAddModal(false);
-                  setSelectedDrug(null);
-                }} 
-                className="hover:bg-white/20 p-1 rounded-lg"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleAddRequest} className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t('search_drug')}</label>
-                {!selectedDrug ? (
-                  <DrugSearch 
-                    onSelect={(drug) => setSelectedDrug(drug)} 
-                    onAddMissing={(query) => {
-                      setMissingItemQuery(query);
-                      setShowMissingModal(true);
-                    }}
-                  />
-                ) : (
-                  <div className="space-y-3 animate-in fade-in duration-300">
-                    <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 hover:border-primary/30 hover:bg-slate-100/50 transition-all duration-300 group">
-                      <div className="flex justify-between items-center mb-4">
-                        <div className="flex items-center gap-2 text-emerald-600 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                          <ShieldCheck size={18} />
-                          <span className="text-xs uppercase tracking-wider">{t('dashboard_drug_verified')}</span>
-                        </div>
-                        <button 
-                          type="button"
-                          onClick={() => setSelectedDrug(null)} 
-                          className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 hover:text-primary hover:border-primary transition-all shadow-sm group-hover:shadow-md"
-                        >
-                          <RefreshCw size={14} className="group-hover:rotate-180 transition-transform duration-500" />
-                          <span>{t('dashboard_change_drug')}</span>
-                        </button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('english_name')}</label>
-                          <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold shadow-sm">
-                            {selectedDrug.name_en || ''}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('arabic_name')}</label>
-                          <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold text-right shadow-sm">
-                            {selectedDrug.name_ar || ''}
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('barcode')}</label>
-                          <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-500 font-mono text-sm shadow-sm">
-                            {selectedDrug.barcode || ''}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {selectedDrug && (
-                <div className="space-y-1 animate-in slide-in-from-bottom-4 duration-300">
-                  <label className="text-xs font-bold text-slate-500 uppercase">{t('quantity')}</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-                    className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                  />
-                </div>
-              )}
-
-              <button
-                disabled={loading || !selectedDrug || !selectedDrug.barcode || parseInt(selectedDrug.barcode.toString().replace(/\D/g, '')) === 0 || !quantity || quantity <= 0}
-                className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-primary/20"
-              >
-                {loading ? <Loader2 className="animate-spin" /> : t('add_request')}
-              </button>
-            </form>
-          </div>
-        </div>
+        <AddRequestModal 
+          onClose={() => setShowAddModal(false)}
+          onSuccess={fetchRequests}
+          onAddMissing={(query) => {
+            setMissingItemQuery(query);
+            setShowMissingModal(true);
+          }}
+        />
       )}
 
       {/* Edit Modal */}
@@ -451,16 +402,29 @@ export const MyRequests = () => {
               </button>
             </div>
             <form onSubmit={handleEditRequest} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t('quantity')}</label>
-                <input
-                  type="number"
-                  required
-                  min="1"
-                  value={editData.quantity}
-                  onChange={(e) => setEditData({ ...editData, quantity: parseInt(e.target.value) || 1 })}
-                  className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase">{i18n.language === 'ar' ? 'علبة' : 'Packs'}</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={editData.quantity}
+                    onChange={(e) => setEditData({ ...editData, quantity: parseInt(e.target.value) || 0 })}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase">{i18n.language === 'ar' ? 'وحدة' : 'Units'}</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={editData.strips_count}
+                    onChange={(e) => setEditData({ ...editData, strips_count: parseInt(e.target.value) || 0 })}
+                    className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
               </div>
               <button
                 disabled={loading}
@@ -548,21 +512,36 @@ export const MyRequests = () => {
 
               {quantityAction && (
                 <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase">{t('quantity')}</label>
-                    <input
-                      type="number"
-                      required
-                      min="1"
-                      max={quantityAction === 'deduct' ? selectedRequest.quantity : undefined}
-                      value={quantityValue}
-                      onChange={(e) => setQuantityValue(parseInt(e.target.value) || 1)}
-                      className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase">{i18n.language === 'ar' ? 'علبة' : 'Packs'}</label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        max={quantityAction === 'deduct' ? selectedRequest.quantity : undefined}
+                        value={quantityValue}
+                        onChange={(e) => setQuantityValue(parseInt(e.target.value) || 0)}
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-slate-500 uppercase">{i18n.language === 'ar' ? 'وحدة' : 'Units'}</label>
+                      <input
+                        type="number"
+                        required
+                        min="0"
+                        max={quantityAction === 'deduct' ? selectedRequest.strips_count : undefined}
+                        value={stripsValue}
+                        onChange={(e) => setStripsValue(parseInt(e.target.value) || 0)}
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
                   </div>
                   <button
                     onClick={handleUpdateQuantity}
-                    className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20"
+                    disabled={quantityValue === 0 && stripsValue === 0}
+                    className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
                   >
                     {t('dashboard_continue')}
                   </button>
@@ -587,7 +566,7 @@ export const MyRequests = () => {
               <Info size={32} />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('archive_question')}</h2>
-            <p className="text-slate-500 mb-8">{t('dashboard_archive_units', { count: quantityValue })}</p>
+            <p className="text-slate-500 mb-8">{formatQuantity(quantityValue, stripsValue, i18n)}</p>
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleDeductArchive(t('archive_purchased'))}

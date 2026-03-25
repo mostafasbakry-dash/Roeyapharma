@@ -56,3 +56,24 @@ export function getExpiryStatus(expiryDate: string) {
   
   return { label: 'Safe', color: 'slate', days: diffDays, suggestion: 'Standard pricing' };
 }
+
+export function formatQuantity(quantity: number, stripsCount: number, i18n: any) {
+  const isAr = i18n.language === 'ar';
+  const packsLabel = isAr ? 'علبة' : 'Packs';
+  const unitsLabel = isAr ? 'وحدة' : 'Units';
+  const andLabel = isAr ? 'و' : 'and';
+
+  const q = Number(quantity) || 0;
+  const s = Number(stripsCount) || 0;
+
+  if (q > 0 && s > 0) {
+    return `${q} ${packsLabel} ${andLabel} ${s} ${unitsLabel}`;
+  }
+  if (q > 0) {
+    return `${q} ${packsLabel}`;
+  }
+  if (s > 0) {
+    return `${s} ${unitsLabel}`;
+  }
+  return `0 ${packsLabel}`;
+}

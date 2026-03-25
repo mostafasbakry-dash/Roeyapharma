@@ -428,7 +428,8 @@ export const MyOffers = () => {
       <BulkUpload onSuccess={fetchOffers} />
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-start">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -520,12 +521,96 @@ export const MyOffers = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {offers.length > 0 ? (
+            offers.map((offer) => (
+              <div key={offer.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900 text-sm">{offer.english_name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{offer.barcode}</span>
+                  </div>
+                  {(() => {
+                    const status = getExpiryStatus(offer.expiry_date);
+                    return (
+                      <span className={cn(
+                        "px-2 py-0.5 rounded text-[10px] font-bold whitespace-nowrap",
+                        status.color === 'rose' && "bg-rose-100 text-rose-700",
+                        status.color === 'orange' && "bg-orange-100 text-orange-700",
+                        status.color === 'emerald' && "bg-emerald-100 text-emerald-700",
+                        status.color === 'slate' && "bg-slate-100 text-slate-700"
+                      )}>
+                        {format(new Date(offer.expiry_date), 'MMM yyyy')}
+                      </span>
+                    );
+                  })()}
+                </div>
+                
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex flex-col">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">{t('price')}</span>
+                    <span className="font-bold text-slate-700">{offer.price} {t('egp')}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">{t('discount')}</span>
+                    <span className="font-bold text-primary">{offer.discount}%</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">{t('quantity')}</span>
+                    <span className="font-bold text-slate-700">
+                      {formatQuantity(offer.quantity, offer.strips_count || 0, i18n)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2 border-t border-slate-50">
+                  <button 
+                    onClick={() => {
+                      setSelectedOffer(offer);
+                      setQuantityAction(null);
+                      setQuantityValue(0);
+                      setStripsValue(0);
+                      setShowQuantityModal(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold active:scale-95 transition-transform"
+                  >
+                    <PlusCircle size={14} />
+                    {t('dashboard_update_quantity')}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSelectedOffer(offer);
+                      setEditData({ price: offer.price, discount: offer.discount });
+                      setShowEditModal(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold active:scale-95 transition-transform"
+                  >
+                    <Edit2 size={14} />
+                    {t('edit')}
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteOffer(offer.id)}
+                    className="p-2 bg-rose-50 text-rose-600 rounded-lg active:scale-95 transition-transform"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-slate-500 text-sm">
+              {error ? 'Failed to load items' : 'No items found'}
+            </div>
+          )}
+        </div>
       </div>
 
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-visible animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl overflow-visible animate-in slide-in-from-bottom md:zoom-in duration-300 max-h-[90vh] overflow-y-auto">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center sticky top-0 z-10">
               <h2 className="text-xl font-bold">{t('add_offer')}</h2>
               <button 
                 onClick={() => {
@@ -675,9 +760,9 @@ export const MyOffers = () => {
 
       {/* Edit Modal */}
       {showEditModal && selectedOffer && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold">{t('edit')}</h2>
               <button onClick={() => setShowEditModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <X size={24} />
@@ -772,9 +857,9 @@ export const MyOffers = () => {
 
       {/* Update Quantity Modal */}
       {showQuantityModal && selectedOffer && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold">{t('dashboard_update_quantity')}</h2>
               <button onClick={() => setShowQuantityModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <X size={24} />

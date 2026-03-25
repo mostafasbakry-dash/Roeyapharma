@@ -4,6 +4,7 @@ import { FileSpreadsheet, Download, Upload, Loader2, AlertTriangle } from 'lucid
 import * as XLSX from 'xlsx';
 import { toast } from 'react-hot-toast';
 import { getSupabase } from '@/src/lib/supabase';
+import { cn } from '@/src/lib/utils';
 
 interface BulkUploadProps {
   onSuccess?: () => void;
@@ -363,7 +364,7 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
               {t('clear_preview')}
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-xs">
                 <tr>
@@ -400,6 +401,44 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {previewData.map((row, idx) => {
+              const isValid = validBarcodes.has(row.barcode);
+              return (
+                <div key={idx} className={cn("p-4 space-y-3", !isValid && "bg-rose-50")}>
+                  <div className="flex justify-between items-start">
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-slate-900 text-sm truncate">{row['Drug Name EN']}</span>
+                      <span className="text-[10px] text-slate-500 truncate">{row['Drug Name AR']}</span>
+                      <span className="text-[10px] text-slate-400 font-mono mt-1">{row.barcode}</span>
+                    </div>
+                    {isValid ? (
+                      <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold">
+                        {t('ready')}
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 bg-rose-100 text-rose-600 rounded text-[10px] font-bold">
+                        {t('not_in_master_list')}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex flex-col">
+                      <span className="text-slate-400 uppercase font-bold text-[9px]">{t('expiry')}</span>
+                      <span className="font-bold text-slate-700">{row.expiry_date}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-slate-400 uppercase font-bold text-[9px]">{t('price')}</span>
+                      <span className="font-bold text-primary">{row['Price']}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

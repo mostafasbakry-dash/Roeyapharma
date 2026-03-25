@@ -293,7 +293,8 @@ export const MyRequests = () => {
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-start">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -378,6 +379,79 @@ export const MyRequests = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <div className="p-12 flex flex-col items-center gap-3">
+              <Loader2 className="animate-spin text-primary" size={32} />
+              <span className="text-sm text-slate-500">{t('loading')}</span>
+            </div>
+          ) : requests.length > 0 ? (
+            requests.map((request) => (
+              <div key={request.id} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900 text-sm">{request.english_name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">{request.barcode}</span>
+                  </div>
+                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
+                    {t('dashboard_active')}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <span className="text-slate-400 uppercase font-bold text-[9px]">{t('quantity')}</span>
+                    <span className="font-bold text-slate-700 text-sm">
+                      {formatQuantity(request.quantity, request.strips_count || 0, i18n)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2 border-t border-slate-50">
+                  <button 
+                    onClick={() => {
+                      setSelectedRequest(request);
+                      setQuantityAction(null);
+                      setQuantityValue(0);
+                      setStripsValue(0);
+                      setShowQuantityModal(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold active:scale-95 transition-transform"
+                  >
+                    <PlusCircle size={14} />
+                    {t('dashboard_update_quantity')}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSelectedRequest(request);
+                      setEditData({ 
+                        quantity: request.quantity,
+                        strips_count: request.strips_count || 0
+                      });
+                      setShowEditModal(true);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold active:scale-95 transition-transform"
+                  >
+                    <Edit2 size={14} />
+                    {t('edit')}
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteRequest(request.id)}
+                    className="p-2 bg-rose-50 text-rose-600 rounded-lg active:scale-95 transition-transform"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-slate-500 text-sm">
+              {error ? t('dashboard_failed_load') : t('dashboard_no_items')}
+            </div>
+          )}
+        </div>
       </div>
 
       {showAddModal && (
@@ -393,9 +467,9 @@ export const MyRequests = () => {
 
       {/* Edit Modal */}
       {showEditModal && selectedRequest && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold">{t('edit')}</h2>
               <button onClick={() => setShowEditModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <X size={24} />
@@ -439,8 +513,8 @@ export const MyRequests = () => {
 
       {/* Cancel Modal (Archive Actions) */}
       {showCancelModal && selectedRequest && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in duration-200 relative">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-sm rounded-t-3xl md:rounded-3xl shadow-2xl p-8 text-center animate-in slide-in-from-bottom md:zoom-in duration-300 relative">
             <button 
               onClick={() => setShowCancelModal(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1"
@@ -478,9 +552,9 @@ export const MyRequests = () => {
 
       {/* Update Quantity Modal */}
       {showQuantityModal && selectedRequest && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center">
               <h2 className="text-xl font-bold">{t('dashboard_update_quantity')}</h2>
               <button onClick={() => setShowQuantityModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <X size={24} />

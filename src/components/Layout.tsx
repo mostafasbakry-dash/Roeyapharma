@@ -168,8 +168,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Mobile Header */}
-      <div className="flex-1 flex flex-col">
-        <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-50">
+      <div className="flex-1 flex flex-col min-h-screen pb-16 md:pb-0">
+        <header className="md:hidden bg-white border-b border-slate-200 p-3 flex items-center justify-between sticky top-0 z-50 h-14">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-slate-100">
               {!logoError ? (
@@ -184,68 +184,56 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 <div className="text-primary font-bold text-lg">R</div>
               )}
             </div>
-            <h1 className="font-bold text-lg text-primary">{t('app_name')}</h1>
+            <h1 className="font-bold text-lg text-primary tracking-tight">{t('app_name')}</h1>
           </div>
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(!isMobileMenuOpen);
-            }}
-            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleLanguage}
+              className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+              title={i18n.language === 'ar' ? 'English' : 'العربية'}
+            >
+              <Languages size={20} />
+            </button>
+            <Link to="/profile" className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+              <User size={20} />
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         </header>
 
-        <Header />
-
-        {/* Mobile Menu Overlay */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 bg-white pt-20 p-4">
-            <nav className="space-y-2">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-4 rounded-xl transition-colors",
-                    location.pathname === item.to 
-                      ? "bg-primary text-white" 
-                      : "text-slate-600 bg-slate-50"
-                  )}
-                >
-                  <item.icon size={24} />
-                  <span className="font-semibold text-lg">{item.label}</span>
-                </Link>
-              ))}
-              <div className="pt-4 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => {
-                    toggleLanguage();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center justify-center gap-2 p-4 bg-slate-100 text-slate-600 rounded-xl font-medium"
-                >
-                  <Languages size={20} />
-                  {i18n.language === 'ar' ? 'English' : 'العربية'}
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center justify-center gap-2 p-4 bg-red-50 text-red-600 rounded-xl font-medium"
-                >
-                  <LogOut size={20} />
-                  {t('logout')}
-                </button>
-              </div>
-            </nav>
-          </div>
-        )}
+        <div className="hidden md:block">
+          <Header />
+        </div>
 
         <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
+
+        {/* Bottom Navigation Bar */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around h-16 z-50 px-2">
+          {menuItems.slice(0, 5).map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
+                location.pathname === item.to 
+                  ? "text-primary" 
+                  : "text-slate-400"
+              )}
+            >
+              <item.icon size={20} className={cn(location.pathname === item.to && "scale-110 transition-transform")} />
+              <span className="text-[10px] font-medium truncate w-full text-center px-1">
+                {item.label}
+              </span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </div>
   );

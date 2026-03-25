@@ -377,7 +377,7 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4">
         <StatCard 
           title={t('stats_total_offers')} 
           value={stats.totalOffers} 
@@ -420,8 +420,8 @@ export const Dashboard = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className="lg:col-span-2 space-y-6 md:space-y-8">
           {/* Smart Match Widget */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -518,26 +518,26 @@ export const Dashboard = () => {
               ) : recentActivity.length > 0 ? (
                 recentActivity.map((item, i) => (
                   <div key={i} className="p-4 border-b border-slate-100 last:border-0 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 md:gap-4">
                       <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center",
+                        "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0",
                         item.type === 'archive' ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500"
                       )}>
-                        {getActivityIcon(item.type)}
+                        {React.cloneElement(getActivityIcon(item.type) as React.ReactElement, { size: 16 })}
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-900">{item.english_name}</p>
-                        <p className="text-xs text-slate-500">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900 text-sm md:text-base truncate">{item.english_name}</p>
+                        <p className="text-[10px] md:text-xs text-slate-500 truncate">
                           {new Date(item.created_at).toLocaleDateString()} • {getActivityLabel(item)}
                         </p>
                       </div>
                     </div>
-                    <div className="text-end">
-                      <p className="font-bold text-slate-900">
+                    <div className="text-end shrink-0">
+                      <p className="font-bold text-slate-900 text-sm md:text-base">
                         {item.type === 'offer' || item.type === 'archive' ? formatCurrency(Number(item.price) || 0) : `${item.quantity} ${t('units')}`}
                       </p>
                       <p className={cn(
-                        "text-[10px] font-bold uppercase",
+                        "text-[9px] md:text-[10px] font-bold uppercase",
                         item.type === 'archive' ? "text-amber-600" : "text-emerald-600"
                       )}>
                         {item.type === 'archive' ? item.action_type : t('dashboard_active')}
@@ -645,18 +645,18 @@ export const Dashboard = () => {
 
       {/* Near Expiry Modal */}
       {showExpiryModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-rose-500 p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <AlertCircle size={24} />
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-2xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-rose-500 p-4 md:p-6 text-white flex justify-between items-center">
+              <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                <AlertCircle size={20} md:size={24} />
                 {t('near_expiry_alert')}
               </h2>
               <button onClick={() => setShowExpiryModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <Plus className="rotate-45" size={24} />
               </button>
             </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto space-y-4">
+            <div className="p-4 md:p-6 max-h-[70vh] overflow-y-auto space-y-3 md:space-y-4">
               {allOffers.filter(o => {
                 const status = getExpiryStatus(o.expiry_date);
                 return status.color === 'rose'; // Only Critical (Red) items
@@ -670,19 +670,19 @@ export const Dashboard = () => {
                   .map((offer, i) => {
                     const status = getExpiryStatus(offer.expiry_date);
                     return (
-                      <div key={i} className="flex items-center justify-between p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-rose-100 text-rose-600">
-                            <AlertCircle size={20} />
+                      <div key={i} className="flex items-center justify-between p-3 md:p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-rose-100 text-rose-600 shrink-0">
+                            <AlertCircle size={16} md:size={20} />
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900">{offer.english_name}</p>
-                            <p className="text-xs text-slate-500">
+                            <p className="font-bold text-slate-900 text-sm md:text-base">{offer.english_name}</p>
+                            <p className="text-[10px] md:text-xs text-slate-500">
                               {t('expiry_date')}: {new Date(offer.expiry_date).toLocaleDateString()} ({t('days_left', { count: status.days })})
                             </p>
                           </div>
                         </div>
-                        <div className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700">
+                        <div className="px-2 md:px-3 py-0.5 md:py-1 rounded-full text-[10px] md:text-xs font-bold bg-rose-100 text-rose-700 shrink-0">
                           {status.label}
                         </div>
                       </div>
@@ -700,18 +700,18 @@ export const Dashboard = () => {
 
       {/* Optimization Tips Modal */}
       {showOptimizationModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-emerald-500 p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <TrendingUp size={24} />
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-2xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-emerald-500 p-4 md:p-6 text-white flex justify-between items-center">
+              <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                <TrendingUp size={20} md:size={24} />
                 {t('optimization_tips')}
               </h2>
               <button onClick={() => setShowOptimizationModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
                 <Plus className="rotate-45" size={24} />
               </button>
             </div>
-            <div className="p-6 max-h-[70vh] overflow-y-auto space-y-4">
+            <div className="p-4 md:p-6 max-h-[70vh] overflow-y-auto space-y-3 md:space-y-4">
               {allOffers.filter(o => {
                 const status = getExpiryStatus(o.expiry_date);
                 return status.color === 'rose' || status.color === 'orange' || status.color === 'emerald';
@@ -724,26 +724,26 @@ export const Dashboard = () => {
                   .map((offer, i) => {
                     const status = getExpiryStatus(offer.expiry_date);
                     return (
-                      <div key={i} className="p-4 border border-slate-100 rounded-xl space-y-3">
+                      <div key={i} className="p-3 md:p-4 border border-slate-100 rounded-xl space-y-2 md:space-y-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                              <TrendingUp size={16} />
+                          <div className="flex items-center gap-2 md:gap-3">
+                            <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                              <TrendingUp size={14} md:size={16} />
                             </div>
-                            <p className="font-bold text-slate-900">{offer.english_name}</p>
+                            <p className="font-bold text-slate-900 text-sm md:text-base">{offer.english_name}</p>
                           </div>
                           <div className="text-end">
-                            <p className="text-xs text-slate-500">{t('current_discount')}</p>
-                            <p className="font-bold text-primary">{offer.discount}%</p>
+                            <p className="text-[10px] text-slate-500">{t('current_discount')}</p>
+                            <p className="font-bold text-primary text-sm md:text-base">{offer.discount}%</p>
                           </div>
                         </div>
-                        <div className="bg-slate-50 p-3 rounded-lg flex items-start gap-3">
-                          <div className="mt-1 p-1 bg-white rounded shadow-sm text-emerald-600">
-                            <Star size={14} />
+                        <div className="bg-slate-50 p-2 md:p-3 rounded-lg flex items-start gap-2 md:gap-3">
+                          <div className="mt-1 p-1 bg-white rounded shadow-sm text-emerald-600 shrink-0">
+                            <Star size={12} md:size={14} />
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-900">{t('recommendation')}</p>
-                            <p className="text-xs text-slate-600">{status.suggestion}</p>
+                            <p className="text-xs md:text-sm font-bold text-slate-900">{t('recommendation')}</p>
+                            <p className="text-[10px] md:text-xs text-slate-600">{status.suggestion}</p>
                           </div>
                         </div>
                       </div>

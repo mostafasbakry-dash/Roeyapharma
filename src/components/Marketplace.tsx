@@ -251,7 +251,7 @@ export const Marketplace = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {loading ? (
           <div className="col-span-full py-20 flex items-center justify-center">
             <Loader2 className="animate-spin text-primary" size={48} />
@@ -285,10 +285,10 @@ export const Marketplace = () => {
       </div>
 
       {selectedItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">{t('pharmacy_details')}</h2>
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center">
+              <h2 className="text-lg md:text-xl font-bold">{t('pharmacy_details')}</h2>
               <button 
                 onClick={() => setSelectedItem(null)} 
                 className="hover:bg-white/20 p-1 rounded-lg"
@@ -297,43 +297,43 @@ export const Marketplace = () => {
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-primary">
-                  <Building size={32} />
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 rounded-xl md:rounded-2xl flex items-center justify-center text-primary">
+                  <Building size={24} md:size={32} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">
+                  <h3 className="text-lg md:text-xl font-bold text-slate-900">
                     {selectedItem.pharmacies?.pharmacy_name || selectedItem.pharmacy_name || t('unknown_pharmacy')}
                   </h3>
-                  <p className="text-slate-500 flex items-center gap-1">
-                    <MapPin size={14} />
+                  <p className="text-xs md:text-sm text-slate-500 flex items-center gap-1">
+                    <MapPin size={12} md:size={14} />
                     {selectedItem.pharmacies?.city || selectedItem.city || t('unknown_location')}, {t('egypt')}
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+              <div className="space-y-3 md:space-y-4">
+                <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100 space-y-2 md:space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <Phone size={18} className="text-primary" />
-                      <span className="font-medium">{selectedItem.pharmacies?.phone || t('not_provided')}</span>
+                    <div className="flex items-center gap-2 md:gap-3 text-slate-600">
+                      <Phone size={16} md:size={18} className="text-primary" />
+                      <span className="text-sm font-medium">{selectedItem.pharmacies?.phone || t('not_provided')}</span>
                     </div>
                     {selectedItem.pharmacies?.phone && (
                       <a 
                         href={`tel:${selectedItem.pharmacies.phone}`}
                         className="p-2 bg-white border border-slate-200 rounded-lg text-primary hover:bg-primary hover:text-white transition-all"
                       >
-                        <Phone size={16} />
+                        <Phone size={14} md:size={16} />
                       </a>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-slate-600">
-                      <MessageSquare size={18} className="text-sky-500" />
-                      <span className="font-medium">
+                    <div className="flex items-center gap-2 md:gap-3 text-slate-600">
+                      <MessageSquare size={16} md:size={18} className="text-sky-500" />
+                      <span className="text-sm font-medium">
                         {selectedItem.pharmacies?.telegram ? `@${selectedItem.pharmacies.telegram}` : t('not_provided')}
                       </span>
                     </div>
@@ -344,7 +344,7 @@ export const Marketplace = () => {
                         rel="noopener noreferrer"
                         className="p-2 bg-white border border-slate-200 rounded-lg text-sky-500 hover:bg-sky-500 hover:text-white transition-all"
                       >
-                        <ExternalLink size={16} />
+                        <ExternalLink size={14} md:size={16} />
                       </a>
                     )}
                   </div>
@@ -352,7 +352,7 @@ export const Marketplace = () => {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('full_address')}</label>
-                  <p className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-700 text-sm">
+                  <p className="p-2 md:p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-700 text-xs md:text-sm">
                     {selectedItem.pharmacies?.address || selectedItem.pharmacy_address || t('not_provided')}
                   </p>
                 </div>
@@ -360,7 +360,7 @@ export const Marketplace = () => {
 
               <button
                 onClick={() => setSelectedItem(null)}
-                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all"
+                className="w-full py-3 md:py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all"
               >
                 {t('close')}
               </button>
@@ -384,10 +384,10 @@ export const Marketplace = () => {
 
       {/* Transfer Modal */}
       {transferModalItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
-            <div className="bg-primary p-6 text-white flex justify-between items-center">
-              <h2 className="text-xl font-bold">{t('confirm_transaction')}</h2>
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center">
+              <h2 className="text-lg md:text-xl font-bold">{t('confirm_transaction')}</h2>
               <button 
                 onClick={() => setTransferModalItem(null)} 
                 className="hover:bg-white/20 p-1 rounded-lg"
@@ -396,19 +396,19 @@ export const Marketplace = () => {
               </button>
             </div>
             
-            <div className="p-6 space-y-6">
-              <div className="space-y-2">
-                <h3 className="font-bold text-slate-900">
+            <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+              <div className="space-y-1 md:space-y-2">
+                <h3 className="font-bold text-slate-900 text-sm md:text-base">
                   {transferModalItem.english_name}
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className="text-xs md:text-sm text-slate-500">
                   {t('available_quantity')} {formatQuantity(transferModalItem.quantity, transferModalItem.strips_count || 0, i18n)}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase">
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="space-y-1 md:space-y-2">
+                  <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase">
                     {isRtl ? 'علبة' : 'Packs'}
                   </label>
                   <input
@@ -417,11 +417,11 @@ export const Marketplace = () => {
                     max={transferModalItem.quantity}
                     value={transferQuantity}
                     onChange={(e) => setTransferQuantity(Math.min(transferModalItem.quantity, Math.max(0, parseInt(e.target.value) || 0)))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="w-full p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase">
+                <div className="space-y-1 md:space-y-2">
+                  <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase">
                     {isRtl ? 'وحدة' : 'Units'}
                   </label>
                   <input
@@ -430,22 +430,22 @@ export const Marketplace = () => {
                     max={transferModalItem.strips_count}
                     value={transferStrips}
                     onChange={(e) => setTransferStrips(Math.min(transferModalItem.strips_count || 0, Math.max(0, parseInt(e.target.value) || 0)))}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none"
+                    className="w-full p-2 md:p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none text-sm md:text-base"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2 md:gap-3">
                 <button
                   onClick={() => setTransferModalItem(null)}
-                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all"
+                  className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-all text-sm md:text-base"
                 >
                   {t('cancel')}
                 </button>
                 <button
                   onClick={() => confirmTransaction(transferModalItem, transferQuantity, transferStrips)}
                   disabled={loading || (transferQuantity <= 0 && transferStrips <= 0) || (transferQuantity > transferModalItem.quantity) || (transferStrips > (transferModalItem.strips_count || 0))}
-                  className="flex-1 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+                  className="flex-1 py-3 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50 text-sm md:text-base"
                 >
                   {loading ? <Loader2 className="animate-spin mx-auto" size={20} /> : t('confirm')}
                 </button>

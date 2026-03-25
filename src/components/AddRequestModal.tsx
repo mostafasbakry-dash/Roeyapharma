@@ -89,9 +89,9 @@ export const AddRequestModal = ({ onClose, onSuccess, onAddMissing }: AddRequest
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-visible animate-in zoom-in duration-200">
-        <div className="bg-primary p-6 text-white flex justify-between items-center">
+    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl overflow-visible animate-in slide-in-from-bottom md:zoom-in duration-300 max-h-[90vh] overflow-y-auto">
+        <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center sticky top-0 z-10">
           <h2 className="text-xl font-bold">{t('add_request')}</h2>
           <button 
             onClick={() => {
@@ -132,26 +132,26 @@ export const AddRequestModal = ({ onClose, onSuccess, onAddMissing }: AddRequest
                     </button>
                   </div>
                   
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('english_name')}</label>
-                      <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold shadow-sm">
-                        {selectedDrug.name_en || ''}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('arabic_name')}</label>
-                      <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold text-right shadow-sm">
-                        {selectedDrug.name_ar || ''}
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('barcode')}</label>
-                      <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-500 font-mono text-sm shadow-sm">
-                        {selectedDrug.barcode || ''}
-                      </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('english_name')}</label>
+                    <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold shadow-sm text-sm md:text-base">
+                      {selectedDrug.name_en || ''}
                     </div>
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('arabic_name')}</label>
+                    <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-700 font-bold text-right shadow-sm text-sm md:text-base">
+                      {selectedDrug.name_ar || ''}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase px-1">{t('barcode')}</label>
+                    <div className="w-full p-3 bg-white border border-slate-100 rounded-xl text-slate-500 font-mono text-sm shadow-sm">
+                      {selectedDrug.barcode || ''}
+                    </div>
+                  </div>
+                </div>
                 </div>
               </div>
             )}

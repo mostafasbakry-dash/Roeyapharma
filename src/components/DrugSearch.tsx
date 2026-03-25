@@ -140,24 +140,24 @@ export const DrugSearch = React.forwardRef<HTMLInputElement, DrugSearchProps>(({
         >
           {results.length > 0 ? (
             results.map((drug) => (
-              <button
-                key={drug.id}
-                onClick={() => {
-                  onSelect(drug);
-                  setQuery('');
-                  setIsOpen(false);
-                }}
-                className="w-full text-start px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-0.5 transition-colors"
-              >
-                <div className="flex justify-between items-center">
-                  <span className="font-bold text-slate-900 text-sm truncate flex-1">{drug.name_en}</span>
-                  <span className="text-[10px] font-mono text-slate-400 ml-2 shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">{drug.barcode}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-slate-500 truncate flex-1">{drug.name_ar}</span>
-                  <span className="text-[10px] text-primary font-bold uppercase tracking-wider ml-2 shrink-0">{drug.manufacturer}</span>
-                </div>
-              </button>
+                <button
+                  key={drug.id}
+                  onClick={() => {
+                    onSelect(drug);
+                    setQuery('');
+                    setIsOpen(false);
+                  }}
+                  className="w-full text-start px-4 py-3.5 md:py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-0.5 transition-colors active:bg-slate-100"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-slate-900 text-sm md:text-base truncate flex-1">{drug.name_en}</span>
+                    <span className="text-[10px] md:text-xs font-mono text-slate-400 ml-2 shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">{drug.barcode}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs md:text-sm text-slate-500 truncate flex-1">{drug.name_ar}</span>
+                    <span className="text-[10px] md:text-xs text-primary font-bold uppercase tracking-wider ml-2 shrink-0">{drug.manufacturer}</span>
+                  </div>
+                </button>
             ))
           ) : hasSearched && !loading && (
             <div className="p-4 text-center space-y-3">

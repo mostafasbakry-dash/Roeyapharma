@@ -184,7 +184,7 @@ export const Reports = () => {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-start">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -238,6 +238,42 @@ export const Reports = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {sortedData.length > 0 ? (
+            sortedData.map((item, i) => (
+              <div key={item.id || i} className="p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900">{item.english_name}</span>
+                    <span className="text-[10px] text-slate-500">{item.arabic_name}</span>
+                  </div>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase",
+                    item.action_type.includes('بيع') || item.action_type.includes('Sale') || item.action_type.includes('Purchased')
+                      ? "bg-emerald-100 text-emerald-700" 
+                      : "bg-indigo-100 text-indigo-700"
+                  )}>
+                    {item.action_type}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="text-xs text-slate-500">
+                    {format(parseISO(item.created_at), 'MMM d, yyyy HH:mm')}
+                  </div>
+                  <div className="px-3 py-1 bg-slate-100 rounded-full text-xs font-bold text-slate-700">
+                    {formatQuantity(item.quantity, item.strips_count || 0, i18n)}
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-12 text-center text-slate-500 text-sm">
+              {t('no_transactions')}
+            </div>
+          )}
         </div>
       </div>
     </div>

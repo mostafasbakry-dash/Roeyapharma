@@ -197,6 +197,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <Link to="/profile" className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
               <User size={20} />
             </Link>
+            <Link to="/settings" className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+              <Settings size={20} />
+            </Link>
             <button
               onClick={handleLogout}
               className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
@@ -216,23 +219,29 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Bottom Navigation Bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around h-16 z-50 px-2">
-          {menuItems.slice(0, 5).map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
-                location.pathname === item.to 
-                  ? "text-primary" 
-                  : "text-slate-400"
-              )}
-            >
-              <item.icon size={20} className={cn(location.pathname === item.to && "scale-110 transition-transform")} />
-              <span className="text-[10px] font-medium truncate w-full text-center px-1">
-                {item.label}
-              </span>
-            </Link>
-          ))}
+          {menuItems.slice(0, 5).map((item) => {
+            const isActive = item.to.includes('?') 
+              ? (location.pathname + location.search) === item.to
+              : location.pathname === item.to;
+            
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors",
+                  isActive 
+                    ? "text-primary" 
+                    : "text-slate-400"
+                )}
+              >
+                <item.icon size={20} className={cn(isActive && "scale-110 transition-transform")} />
+                <span className="text-[10px] font-medium truncate w-full text-center px-1">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
         </nav>
       </div>
     </div>

@@ -15,7 +15,7 @@ import {
   Star
 } from 'lucide-react';
 import { Offer, Request as MarketRequest } from '@/src/types';
-import { formatCurrency, cn, getExpiryStatus } from '@/src/lib/utils';
+import { formatCurrency, cn, getExpiryStatus, formatQuantity } from '@/src/lib/utils';
 import { getSupabase } from '@/src/lib/supabase';
 import { toast } from 'react-hot-toast';
 
@@ -41,7 +41,7 @@ const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
 );
 
 export const Dashboard = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -339,17 +339,22 @@ export const Dashboard = () => {
   };
 
   const getActivityLabel = (item: any) => {
+    const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع', 'Sell Out Roeya', 'تم البيع خارج رؤية', 'Transfer in Roeya', 'تم التحويل عبر رؤية'];
+    const requestLabels = ['تم الشراء', 'Purchased', 'تم التحويل', 'Transferred', 'Purchased Out Roeya', 'تم الشراء خارج رؤية', 'Transferred in Roeya', 'تم التحويل عبر رؤية'];
+
     if (item.type === 'offer') return t('activity_new_offer');
     if (item.type === 'request') return t('activity_new_request');
     if (item.type === 'archive') {
-      const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع', 'Sell Out Roeya', 'تم البيع خارج رؤية', 'Transfer in Roeya', 'تم التحويل عبر رؤية'];
-      const requestLabels = ['تم الشراء', 'Purchased', 'تم التحويل', 'Transferred', 'Purchased Out Roeya', 'تم الشراء خارج رؤية', 'Transferred in Roeya', 'تم التحويل عبر رؤية'];
-      
       if (offerSaleLabels.includes(item.action_type)) return t('activity_sold');
       if (requestLabels.includes(item.action_type)) return t('activity_completed');
       return t('item_archived');
     }
     return t('activity');
+  };
+
+  const isPriceActivity = (item: any) => {
+    const offerSaleLabels = ['بيع داخلي', 'Internal Sale', 'تحويل', 'Transfer', 'بيع', 'Sell Out Roeya', 'تم البيع خارج رؤية', 'Transfer in Roeya', 'تم التحويل عبر رؤية'];
+    return item.type === 'offer' || (item.type === 'archive' && offerSaleLabels.includes(item.action_type));
   };
 
   return (
@@ -534,7 +539,10 @@ export const Dashboard = () => {
                     </div>
                     <div className="text-end shrink-0">
                       <p className="font-bold text-slate-900 text-sm md:text-base">
-                        {item.type === 'offer' || item.type === 'archive' ? formatCurrency(Number(item.price) || 0) : `${item.quantity} ${t('units')}`}
+                        {isPriceActivity(item) 
+                          ? formatCurrency(Number(item.price) || 0) 
+                          : formatQuantity(item.quantity, item.strips_count || 0, i18n)
+                        }
                       </p>
                       <p className={cn(
                         "text-[9px] md:text-[10px] font-bold uppercase",

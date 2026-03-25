@@ -593,7 +593,7 @@ export const MyRequests = () => {
                         type="number"
                         required
                         min="0"
-                        max={quantityAction === 'deduct' ? selectedRequest.quantity : undefined}
+                        max={quantityAction === 'deduct' ? (selectedRequest.quantity || 0) : undefined}
                         value={quantityValue}
                         onChange={(e) => setQuantityValue(parseInt(e.target.value) || 0)}
                         className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
@@ -605,7 +605,7 @@ export const MyRequests = () => {
                         type="number"
                         required
                         min="0"
-                        max={quantityAction === 'deduct' ? selectedRequest.strips_count : undefined}
+                        max={quantityAction === 'deduct' ? (selectedRequest.strips_count || 0) : undefined}
                         value={stripsValue}
                         onChange={(e) => setStripsValue(parseInt(e.target.value) || 0)}
                         className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"

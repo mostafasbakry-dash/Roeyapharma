@@ -49,7 +49,8 @@ export const RatingModal = ({
           stars: Number(stars),
           comment,
           related_item_id: Number(relatedItemId),
-          quantity: quantity ? Number(quantity) : null
+          quantity: quantity ? Number(quantity) : null,
+          strips_count: strips_count ? Number(strips_count) : null
         });
 
       if (error) throw error;

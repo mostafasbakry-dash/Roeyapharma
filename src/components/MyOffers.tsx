@@ -898,7 +898,7 @@ export const MyOffers = () => {
                         type="number"
                         required
                         min="0"
-                        max={quantityAction === 'deduct' ? selectedOffer.quantity : undefined}
+                        max={quantityAction === 'deduct' ? (selectedOffer.quantity || 0) : undefined}
                         value={quantityValue}
                         onChange={(e) => setQuantityValue(parseInt(e.target.value) || 0)}
                         className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"
@@ -910,7 +910,7 @@ export const MyOffers = () => {
                         type="number"
                         required
                         min="0"
-                        max={quantityAction === 'deduct' ? selectedOffer.strips_count : undefined}
+                        max={quantityAction === 'deduct' ? (selectedOffer.strips_count || 0) : undefined}
                         value={stripsValue}
                         onChange={(e) => setStripsValue(parseInt(e.target.value) || 0)}
                         className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary"

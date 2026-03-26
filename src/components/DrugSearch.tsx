@@ -114,15 +114,15 @@ export const DrugSearch = React.forwardRef<HTMLInputElement, DrugSearchProps>(({
 
   return (
     <div ref={wrapperRef} className={cn("relative", className)}>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+      <div className="relative group">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
         <input
           ref={ref}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('search_placeholder')}
-          className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+          className="w-full pl-10 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all shadow-sm text-sm md:text-base"
         />
         {loading && (
           <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" size={20} />
@@ -131,31 +131,27 @@ export const DrugSearch = React.forwardRef<HTMLInputElement, DrugSearchProps>(({
 
       {isOpen && (
         <div 
-          className="absolute z-[9999] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-x-hidden custom-scrollbar"
-          style={{ 
-            maxHeight: '300px', 
-            overflowY: 'scroll',
-            display: 'block'
-          }}
+          className="absolute top-full left-0 z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-x-hidden overflow-y-auto custom-scrollbar max-h-[300px] md:max-h-[400px] animate-in fade-in slide-in-from-top-2 duration-200"
         >
           {results.length > 0 ? (
             results.map((drug) => (
                 <button
                   key={drug.id}
+                  type="button"
                   onClick={() => {
                     onSelect(drug);
                     setQuery('');
                     setIsOpen(false);
                   }}
-                  className="w-full text-start px-4 py-3.5 md:py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-0.5 transition-colors active:bg-slate-100"
+                  className="w-full text-start px-4 py-3.5 md:py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 flex flex-col gap-0.5 transition-all active:bg-slate-100 group/item"
                 >
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-slate-900 text-sm md:text-base truncate flex-1">{drug.name_en}</span>
-                    <span className="text-[10px] md:text-xs font-mono text-slate-400 ml-2 shrink-0 bg-slate-100 px-1.5 py-0.5 rounded">{drug.barcode}</span>
+                    <span className="font-bold text-slate-900 text-sm md:text-base truncate flex-1 group-hover/item:text-primary transition-colors">{drug.name_en}</span>
+                    <span className="text-[10px] md:text-xs font-mono text-slate-400 ml-2 shrink-0 bg-slate-100 px-1.5 py-0.5 rounded group-hover/item:bg-primary/10 group-hover/item:text-primary transition-colors">{drug.barcode}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs md:text-sm text-slate-500 truncate flex-1">{drug.name_ar}</span>
-                    <span className="text-[10px] md:text-xs text-primary font-bold uppercase tracking-wider ml-2 shrink-0">{drug.manufacturer}</span>
+                    <span className="text-[10px] md:text-xs text-primary font-bold uppercase tracking-wider ml-2 shrink-0 opacity-70 group-hover/item:opacity-100 transition-opacity">{drug.manufacturer}</span>
                   </div>
                 </button>
             ))

@@ -133,8 +133,11 @@ export const Login = () => {
         // Update last_login
         await supabase
           .from('pharmacies')
-          .update({ last_login: new Date().toISOString() })
-          .eq('pharmacy_id', profileData.pharmacy_id);
+          .update({ 
+            last_login: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('pharmacy_id', Number(profileData.pharmacy_id));
 
         localStorage.setItem('pharmacy_id', profileData.pharmacy_id.toString());
         localStorage.setItem('pharmacy_profile', JSON.stringify({

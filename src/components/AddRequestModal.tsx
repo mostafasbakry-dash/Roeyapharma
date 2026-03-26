@@ -5,6 +5,7 @@ import { DrugSearch } from './DrugSearch';
 import { toast } from 'react-hot-toast';
 import { getSupabase } from '@/src/lib/supabase';
 import { Drug } from '@/src/types';
+import { cn } from '@/src/lib/utils';
 
 interface AddRequestModalProps {
   onClose: () => void;
@@ -90,8 +91,8 @@ export const AddRequestModal = ({ onClose, onSuccess, onAddMissing }: AddRequest
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl overflow-visible animate-in slide-in-from-bottom md:zoom-in duration-300 max-h-[90vh] overflow-y-auto">
-        <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center sticky top-0 z-10">
+      <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl animate-in slide-in-from-bottom md:zoom-in duration-300 max-h-[95vh] flex flex-col overflow-visible">
+        <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center sticky top-0 z-10 rounded-t-3xl md:rounded-t-3xl">
           <h2 className="text-xl font-bold">{t('add_request')}</h2>
           <button 
             onClick={() => {
@@ -104,17 +105,18 @@ export const AddRequestModal = ({ onClose, onSuccess, onAddMissing }: AddRequest
           </button>
         </div>
         
-        <form onSubmit={handleAddRequest} className="p-6 space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase">{t('search_drug')}</label>
-            {!selectedDrug ? (
-              <DrugSearch 
-                onSelect={(drug) => setSelectedDrug(drug)} 
-                onAddMissing={(query) => {
-                  onAddMissing(query);
-                }}
-              />
-            ) : (
+        <div className={cn("flex-1 p-6 custom-scrollbar", !selectedDrug ? "overflow-visible" : "overflow-y-auto")}>
+          <form onSubmit={handleAddRequest} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase">{t('search_drug')}</label>
+              {!selectedDrug ? (
+                <DrugSearch 
+                  onSelect={(drug) => setSelectedDrug(drug)} 
+                  onAddMissing={(query) => {
+                    onAddMissing(query);
+                  }}
+                />
+              ) : (
               <div className="space-y-3 animate-in fade-in duration-300">
                 <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 hover:border-primary/30 hover:bg-slate-100/50 transition-all duration-300 group">
                   <div className="flex justify-between items-center mb-4">
@@ -190,7 +192,8 @@ export const AddRequestModal = ({ onClose, onSuccess, onAddMissing }: AddRequest
           >
             {loading ? <Loader2 className="animate-spin" /> : t('add_request')}
           </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

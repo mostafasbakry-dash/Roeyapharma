@@ -82,21 +82,29 @@ export const MyRequests = () => {
     if (!supabase) return false;
 
     try {
-      const { error: archiveError } = await supabase
+      const payload = {
+        pharmacy_id: request.pharmacy_id,
+        item_id: request.id,
+        arabic_name: request.arabic_name,
+        english_name: request.english_name,
+        barcode: request.barcode,
+        quantity: quantity,
+        strips_count: stripsCount,
+        price: 0, // Requests don't have price
+        discount: 0, // Requests don't have discount
+        created_at: new Date().toISOString(),
+        action_type: actionType
+      };
+
+      console.log('[archiveItem] Operation: INSERT into sales_archive');
+      console.log('[archiveItem] Payload:', payload);
+
+      const { data, error: archiveError } = await supabase
         .from('sales_archive')
-        .insert([{
-          pharmacy_id: request.pharmacy_id,
-          item_id: request.id,
-          arabic_name: request.arabic_name,
-          english_name: request.english_name,
-          barcode: request.barcode,
-          quantity: quantity,
-          strips_count: stripsCount,
-          price: 0, // Requests don't have price
-          discount: 0, // Requests don't have discount
-          created_at: new Date().toISOString(),
-          action_type: actionType
-        }]);
+        .insert([payload])
+        .select();
+
+      console.log('[archiveItem] Supabase Response:', { data, error: archiveError });
 
       if (archiveError) {
         toast.error(t('dashboard_archive_failed_msg', { message: archiveError.message }));
@@ -116,13 +124,23 @@ export const MyRequests = () => {
       const supabase = getSupabase();
       if (!supabase) return;
 
+      const targetId = Number(selectedRequest.id);
+      console.log('[handleFullCancel] Operation: DELETE from inventory_requests');
+      console.log('[handleFullCancel] Filter: id =', targetId);
+
       // 1. Explicitly delete from inventory_requests
-      const { error: deleteError } = await supabase
+      const { data, error: deleteError } = await supabase
         .from('inventory_requests')
         .delete()
-        .eq('id', selectedRequest.id);
+        .eq('id', targetId)
+        .select();
       
-      if (deleteError) throw deleteError;
+      console.log('[handleFullCancel] Supabase Response:', { data, error: deleteError });
+      
+      if (deleteError) {
+        console.error('Supabase Delete Error:', deleteError);
+        throw deleteError;
+      }
 
       // 2. Archive the item
       const success = await archiveItem(selectedRequest, selectedRequest.quantity, selectedRequest.strips_count || 0, actionType);
@@ -144,24 +162,48 @@ export const MyRequests = () => {
   };
 
   const handleUpdateQuantity = async () => {
-    if (!selectedRequest || !quantityAction) return;
+    if (!selectedRequest || !quantityAction || loading) return;
     
     if (quantityAction === 'add') {
       setLoading(true);
       try {
         const supabase = getSupabase();
         if (supabase) {
-          const newQty = (selectedRequest.quantity || 0) + quantityValue;
-          const newStrips = (selectedRequest.strips_count || 0) + stripsValue;
-          const { error: updateError } = await supabase
-            .from('inventory_requests')
-            .update({ 
-              quantity: newQty,
-              strips_count: newStrips
-            })
-            .eq('id', selectedRequest.id);
+          const currentQty = Number(selectedRequest.quantity) || 0;
+          const currentStrips = Number(selectedRequest.strips_count) || 0;
+          const newQty = currentQty + quantityValue;
+          const newStrips = currentStrips + stripsValue;
           
-          if (updateError) throw updateError;
+          const payload = { 
+            quantity: newQty,
+            strips_count: newStrips,
+            updated_at: new Date().toISOString()
+          };
+          const targetId = Number(selectedRequest.id);
+
+          console.log('[handleUpdateQuantity] Operation: UPDATE inventory_requests');
+          console.log('[handleUpdateQuantity] Target ID:', targetId);
+          console.log('[handleUpdateQuantity] Payload:', payload);
+          console.log('[handleUpdateQuantity] Filter: id =', targetId);
+
+          const { data, error: updateError } = await supabase
+            .from('inventory_requests')
+            .update(payload)
+            .eq('id', targetId)
+            .select();
+          
+          console.log('[handleUpdateQuantity] Supabase Response:', { data, error: updateError });
+          
+          if (updateError) {
+            console.error('Supabase Update Error (Add):', updateError);
+            throw updateError;
+          }
+
+          if (!data || data.length === 0) {
+            toast.error(t('error_generic') + ' (No rows updated)');
+            setLoading(false);
+            return;
+          }
           
           // UI Update (Optimistic)
           setRequests(prev => prev.map(r => 
@@ -184,49 +226,92 @@ export const MyRequests = () => {
   };
 
   const handleDeductArchive = async (actionType: string) => {
-    if (!selectedRequest) return;
+    if (!selectedRequest || loading) return;
     setLoading(true);
     try {
       const supabase = getSupabase();
-      if (!supabase) return;
-
-      const newQty = (selectedRequest.quantity || 0) - quantityValue;
-      const newStrips = (selectedRequest.strips_count || 0) - stripsValue;
-      
-      // 1. Explicitly update or delete from inventory_requests
-      if (newQty <= 0 && newStrips <= 0) {
-        const { error: deleteError } = await supabase
-          .from('inventory_requests')
-          .delete()
-          .eq('id', selectedRequest.id);
-        if (deleteError) throw deleteError;
-      } else {
-        const { error: updateError } = await supabase
-          .from('inventory_requests')
-          .update({ 
-            quantity: Math.max(0, newQty),
-            strips_count: Math.max(0, newStrips)
-          })
-          .eq('id', selectedRequest.id);
-        if (updateError) throw updateError;
+      if (!supabase) {
+        setLoading(false);
+        return;
       }
 
-      // 2. Archive the item
-      const success = await archiveItem(selectedRequest, quantityValue, stripsValue, actionType);
+      const currentQty = Number(selectedRequest.quantity) || 0;
+      const currentStrips = Number(selectedRequest.strips_count) || 0;
+      const newQty = currentQty - quantityValue;
+      const newStrips = currentStrips - stripsValue;
+      const targetId = Number(selectedRequest.id);
       
-      if (success) {
-        // 3. UI Update (Optimistic)
-        if (newQty <= 0 && newStrips <= 0) {
-          setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
-        } else {
-          setRequests(prev => prev.map(r => 
-            r.id === selectedRequest.id ? { ...r, quantity: Math.max(0, newQty), strips_count: Math.max(0, newStrips) } : r
-          ));
+      // 1. Explicitly update or delete from inventory_requests
+      let updateSuccess = false;
+      if (newQty <= 0 && newStrips <= 0) {
+        console.log('[handleDeductArchive] Operation: DELETE from inventory_requests (quantity reached 0)');
+        console.log('[handleDeductArchive] Filter: id =', targetId);
+
+        const { data, error: deleteError } = await supabase
+          .from('inventory_requests')
+          .delete()
+          .eq('id', targetId)
+          .select();
+
+        console.log('[handleDeductArchive] Supabase Response:', { data, error: deleteError });
+
+        if (deleteError) {
+          console.error('Supabase Delete Error (Deduct):', deleteError);
+          throw deleteError;
         }
+        updateSuccess = true;
+      } else {
+        const payload = { 
+          quantity: Math.max(0, newQty),
+          strips_count: Math.max(0, newStrips),
+          updated_at: new Date().toISOString()
+        };
+
+        console.log('[handleDeductArchive] Operation: UPDATE inventory_requests');
+        console.log('[handleDeductArchive] Target ID:', targetId);
+        console.log('[handleDeductArchive] Payload:', payload);
+        console.log('[handleDeductArchive] Filter: id =', targetId);
+
+        const { data, error: updateError } = await supabase
+          .from('inventory_requests')
+          .update(payload)
+          .eq('id', targetId)
+          .select();
+
+        console.log('[handleDeductArchive] Supabase Response:', { data, error: updateError });
+
+        if (updateError) {
+          console.error('Supabase Update Error (Deduct):', updateError);
+          throw updateError;
+        }
+
+        if (data && data.length > 0) {
+          updateSuccess = true;
+        } else {
+          toast.error(t('error_generic') + ' (No rows updated)');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Archive the item ONLY if inventory update was successful
+      if (updateSuccess) {
+        const archiveSuccess = await archiveItem(selectedRequest, quantityValue, stripsValue, actionType);
         
-        toast.success(t('dashboard_archive_success'));
-        setShowDeductActionModal(false);
-        setSelectedRequest(null);
+        if (archiveSuccess) {
+          // 3. UI Update (Optimistic)
+          if (newQty <= 0 && newStrips <= 0) {
+            setRequests(prev => prev.filter(r => r.id !== selectedRequest.id));
+          } else {
+            setRequests(prev => prev.map(r => 
+              r.id === selectedRequest.id ? { ...r, quantity: Math.max(0, newQty), strips_count: Math.max(0, newStrips) } : r
+            ));
+          }
+          
+          toast.success(t('dashboard_archive_success'));
+          setShowDeductActionModal(false);
+          setSelectedRequest(null);
+        }
       }
     } catch (err) {
       toast.error(t('error_generic'));
@@ -242,15 +327,36 @@ export const MyRequests = () => {
     try {
       const supabase = getSupabase();
       if (supabase) {
-        const { error: updateError } = await supabase
+        const payload = { 
+          quantity: editData.quantity,
+          strips_count: editData.strips_count,
+          updated_at: new Date().toISOString()
+        };
+        const targetId = Number(selectedRequest.id);
+
+        console.log('[handleEditRequest] Operation: UPDATE inventory_requests');
+        console.log('[handleEditRequest] Target ID:', targetId);
+        console.log('[handleEditRequest] Payload:', payload);
+        console.log('[handleEditRequest] Filter: id =', targetId);
+
+        const { data, error: updateError } = await supabase
           .from('inventory_requests')
-          .update({ 
-            quantity: editData.quantity,
-            strips_count: editData.strips_count
-          })
-          .eq('id', selectedRequest.id);
+          .update(payload)
+          .eq('id', targetId)
+          .select();
         
-        if (updateError) throw updateError;
+        console.log('[handleEditRequest] Supabase Response:', { data, error: updateError });
+        
+        if (updateError) {
+          console.error('Supabase Update Error (Edit):', updateError);
+          throw updateError;
+        }
+
+        if (!data || data.length === 0) {
+          toast.error(t('error_generic') + ' (No rows updated)');
+          setLoading(false);
+          return;
+        }
         
         // UI Update (Optimistic)
         setRequests(prev => prev.map(r => 
@@ -529,15 +635,17 @@ export const MyRequests = () => {
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleFullCancel(t('archive_purchased'))}
-                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20"
+                disabled={loading}
+                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
               >
-                {t('archive_purchased')}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_purchased')}
               </button>
               <button
                 onClick={() => handleFullCancel(t('archive_transferred'))}
-                className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20"
+                disabled={loading}
+                className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
               >
-                {t('archive_transferred')}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_transferred')}
               </button>
             </div>
             <button 
@@ -614,10 +722,10 @@ export const MyRequests = () => {
                   </div>
                   <button
                     onClick={handleUpdateQuantity}
-                    disabled={quantityValue === 0 && stripsValue === 0}
+                    disabled={loading || (quantityValue === 0 && stripsValue === 0)}
                     className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
                   >
-                    {t('dashboard_continue')}
+                    {loading ? <Loader2 className="animate-spin mx-auto" /> : t('dashboard_continue')}
                   </button>
                 </div>
               )}
@@ -644,15 +752,17 @@ export const MyRequests = () => {
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleDeductArchive(t('archive_purchased'))}
-                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20"
+                disabled={loading}
+                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
               >
-                {t('archive_purchased')}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_purchased')}
               </button>
               <button
                 onClick={() => handleDeductArchive(t('archive_transferred'))}
-                className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20"
+                disabled={loading}
+                className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
               >
-                {t('archive_transferred')}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_transferred')}
               </button>
             </div>
             <button 

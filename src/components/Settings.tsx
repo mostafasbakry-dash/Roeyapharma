@@ -44,8 +44,11 @@ export const Settings = () => {
 
       const { error } = await supabase
         .from('credentials')
-        .update({ password: passwordData.newPassword })
-        .eq('pharmacy_id', current_user_id);
+        .update({ 
+          password: passwordData.newPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('pharmacy_id', Number(current_user_id));
 
       if (error) throw error;
 

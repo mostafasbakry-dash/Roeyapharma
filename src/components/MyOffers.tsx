@@ -182,21 +182,29 @@ export const MyOffers = () => {
     if (!supabase) return false;
 
     try {
-      const { error: archiveError } = await supabase
+      const payload = {
+        pharmacy_id: offer.pharmacy_id,
+        item_id: offer.id,
+        arabic_name: offer.arabic_name,
+        english_name: offer.english_name,
+        barcode: offer.barcode,
+        quantity: quantity,
+        strips_count: stripsCount,
+        price: offer.price,
+        discount: offer.discount,
+        created_at: new Date().toISOString(),
+        action_type: actionType
+      };
+
+      console.log('[archiveItem] Operation: INSERT into sales_archive');
+      console.log('[archiveItem] Payload:', payload);
+
+      const { data, error: archiveError } = await supabase
         .from('sales_archive')
-        .insert([{
-          pharmacy_id: offer.pharmacy_id,
-          item_id: offer.id,
-          arabic_name: offer.arabic_name,
-          english_name: offer.english_name,
-          barcode: offer.barcode,
-          quantity: quantity,
-          strips_count: stripsCount,
-          price: offer.price,
-          discount: offer.discount,
-          created_at: new Date().toISOString(),
-          action_type: actionType
-        }]);
+        .insert([payload])
+        .select();
+
+      console.log('[archiveItem] Supabase Response:', { data, error: archiveError });
 
       if (archiveError) {
         toast.error(t('dashboard_archive_failed_msg', { message: archiveError.message }));
@@ -224,9 +232,12 @@ export const MyOffers = () => {
         const { error: deleteError } = await supabase
           .from('inventory_offers')
           .delete()
-          .eq('id', selectedOffer.id);
+          .eq('id', Number(selectedOffer.id));
 
-        if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error('Supabase Delete Error (Full Cancel):', deleteError);
+          throw deleteError;
+        }
 
         // Update local state immediately using unique ID
         setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
@@ -252,12 +263,22 @@ export const MyOffers = () => {
       // Archive as Cancelled before deleting to prevent incorrect activity records
       await archiveItem(selectedOffer, selectedOffer.quantity, selectedOffer.strips_count || 0, isRtl ? 'ملغي' : 'Cancelled');
 
-      const { error: deleteError } = await supabase
+      const targetId = Number(selectedOffer.id);
+      console.log('[handleDirectDelete] Operation: DELETE from inventory_offers');
+      console.log('[handleDirectDelete] Filter: id =', targetId);
+
+      const { data, error: deleteError } = await supabase
         .from('inventory_offers')
         .delete()
-        .eq('id', selectedOffer.id);
+        .eq('id', targetId)
+        .select();
 
-      if (deleteError) throw deleteError;
+      console.log('[handleDirectDelete] Supabase Response:', { data, error: deleteError });
+
+      if (deleteError) {
+        console.error('Supabase Delete Error (Direct Delete):', deleteError);
+        throw deleteError;
+      }
 
       // Update local state immediately using unique ID
       setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
@@ -273,24 +294,51 @@ export const MyOffers = () => {
   };
 
   const handleUpdateQuantity = async () => {
-    if (!selectedOffer || !quantityAction) return;
+    if (!selectedOffer || !quantityAction || loading) return;
     
+    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    const pharmacy_id_num = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
+
     if (quantityAction === 'add') {
       setLoading(true);
       try {
         const supabase = getSupabase();
         if (supabase) {
-          const newQty = (selectedOffer.quantity || 0) + quantityValue;
-          const newStrips = (selectedOffer.strips_count || 0) + stripsValue;
-          const { error: updateError } = await supabase
-            .from('inventory_offers')
-            .update({ 
-              quantity: newQty,
-              strips_count: newStrips
-            })
-            .eq('id', selectedOffer.id);
+          const currentQty = Number(selectedOffer.quantity) || 0;
+          const currentStrips = Number(selectedOffer.strips_count) || 0;
+          const newQty = currentQty + quantityValue;
+          const newStrips = currentStrips + stripsValue;
           
-          if (updateError) throw updateError;
+          const payload = { 
+            quantity: newQty,
+            strips_count: newStrips,
+            updated_at: new Date().toISOString()
+          };
+          const targetId = Number(selectedOffer.id);
+
+          console.log('[handleUpdateQuantity] Operation: UPDATE inventory_offers');
+          console.log('[handleUpdateQuantity] Target ID:', targetId);
+          console.log('[handleUpdateQuantity] Payload:', payload);
+          console.log('[handleUpdateQuantity] Filter: id =', targetId);
+
+          const { data, error: updateError } = await supabase
+            .from('inventory_offers')
+            .update(payload)
+            .eq('id', targetId)
+            .select();
+          
+          console.log('[handleUpdateQuantity] Supabase Response:', { data, error: updateError });
+          
+          if (updateError) {
+            console.error('Supabase Update Error (Add):', updateError);
+            throw updateError;
+          }
+
+          if (!data || data.length === 0) {
+            toast.error(t('error_generic') + ' (No rows updated)');
+            setLoading(false);
+            return;
+          }
           
           // Update local state immediately using unique ID
           setOffers(prev => prev.map(o => 
@@ -315,49 +363,92 @@ export const MyOffers = () => {
   };
 
   const handleDeductArchive = async (actionType: string) => {
-    if (!selectedOffer) return;
+    if (!selectedOffer || loading) return;
     const supabase = getSupabase();
     if (!supabase) return;
 
+    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    const pharmacy_id_num = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
+
     setLoading(true);
     try {
-      const success = await archiveItem(selectedOffer, quantityValue, stripsValue, actionType);
-      if (success) {
-        const newQty = (selectedOffer.quantity || 0) - quantityValue;
-        const newStrips = (selectedOffer.strips_count || 0) - stripsValue;
-        
-        if (newQty > 0 || newStrips > 0) {
-          // Explicitly update quantity in inventory_offers using unique ID
-          const { error: updateError } = await supabase
-            .from('inventory_offers')
-            .update({ 
-              quantity: Math.max(0, newQty),
-              strips_count: Math.max(0, newStrips)
-            })
-            .eq('id', selectedOffer.id);
+      const currentQty = Number(selectedOffer.quantity) || 0;
+      const currentStrips = Number(selectedOffer.strips_count) || 0;
+      const newQty = currentQty - quantityValue;
+      const newStrips = currentStrips - stripsValue;
+      const targetId = Number(selectedOffer.id);
+      
+      let updateSuccess = false;
+      if (newQty > 0 || newStrips > 0) {
+        // 1. Explicitly update quantity in inventory_offers using unique ID
+        const payload = { 
+          quantity: Math.max(0, newQty),
+          strips_count: Math.max(0, newStrips),
+          updated_at: new Date().toISOString()
+        };
 
-          if (updateError) throw updateError;
+        console.log('[handleDeductArchive] Operation: UPDATE inventory_offers');
+        console.log('[handleDeductArchive] Target ID:', targetId);
+        console.log('[handleDeductArchive] Payload:', payload);
+        console.log('[handleDeductArchive] Filter: id =', targetId);
 
-          // Update local state immediately using unique ID
-          setOffers(prev => prev.map(o => 
-            o.id === selectedOffer.id ? { ...o, quantity: Math.max(0, newQty), strips_count: Math.max(0, newStrips) } : o
-          ));
-        } else {
-          // If quantity becomes 0, delete it
-          const { error: deleteError } = await supabase
-            .from('inventory_offers')
-            .delete()
-            .eq('id', selectedOffer.id);
+        const { data, error: updateError } = await supabase
+          .from('inventory_offers')
+          .update(payload)
+          .eq('id', targetId)
+          .select();
 
-          if (deleteError) throw deleteError;
+        console.log('[handleDeductArchive] Supabase Response:', { data, error: updateError });
 
-          // Update local state immediately using unique ID
-          setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
+        if (updateError) {
+          console.error('Supabase Update Error (Deduct):', updateError);
+          throw updateError;
         }
 
-        toast.success(t('dashboard_archive_success'));
-        setShowDeductActionModal(false);
-        setSelectedOffer(null);
+        if (data && data.length > 0) {
+          updateSuccess = true;
+        } else {
+          toast.error(t('error_generic') + ' (No rows updated)');
+          setLoading(false);
+          return;
+        }
+      } else {
+        // 1. If quantity becomes 0, delete it
+        console.log('[handleDeductArchive] Operation: DELETE from inventory_offers (quantity reached 0)');
+        console.log('[handleDeductArchive] Filter: id =', targetId);
+
+        const { data, error: deleteError } = await supabase
+          .from('inventory_offers')
+          .delete()
+          .eq('id', targetId)
+          .select();
+
+        console.log('[handleDeductArchive] Supabase Response:', { data, error: deleteError });
+
+        if (deleteError) {
+          console.error('Supabase Delete Error (Deduct 0):', deleteError);
+          throw deleteError;
+        }
+        updateSuccess = true;
+      }
+
+      // 2. Archive the item ONLY if inventory update was successful
+      if (updateSuccess) {
+        const archiveSuccess = await archiveItem(selectedOffer, quantityValue, stripsValue, actionType);
+        if (archiveSuccess) {
+          // 3. UI Update (Optimistic)
+          if (newQty > 0 || newStrips > 0) {
+            setOffers(prev => prev.map(o => 
+              o.id === selectedOffer.id ? { ...o, quantity: Math.max(0, newQty), strips_count: Math.max(0, newStrips) } : o
+            ));
+          } else {
+            setOffers(prev => prev.filter(o => o.id !== selectedOffer.id));
+          }
+
+          toast.success(t('dashboard_archive_success'));
+          setShowDeductActionModal(false);
+          setSelectedOffer(null);
+        }
       }
     } catch (err) {
       console.error('Deduct error:', err);
@@ -370,19 +461,43 @@ export const MyOffers = () => {
   const handleEditOffer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOffer) return;
+    const isAdmin = localStorage.getItem('is_admin') === 'true';
+    const pharmacy_id_num = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
+
     setLoading(true);
     try {
       const supabase = getSupabase();
       if (supabase) {
-        const { error: updateError } = await supabase
+        const payload = { 
+          price: editData.price, 
+          discount: editData.discount,
+          updated_at: new Date().toISOString()
+        };
+        const targetId = Number(selectedOffer.id);
+
+        console.log('[handleEditOffer] Operation: UPDATE inventory_offers');
+        console.log('[handleEditOffer] Target ID:', targetId);
+        console.log('[handleEditOffer] Payload:', payload);
+        console.log('[handleEditOffer] Filter: id =', targetId);
+
+        const { data, error: updateError } = await supabase
           .from('inventory_offers')
-          .update({ 
-            price: editData.price, 
-            discount: editData.discount 
-          })
-          .eq('id', selectedOffer.id);
+          .update(payload)
+          .eq('id', targetId)
+          .select();
         
-        if (updateError) throw updateError;
+        console.log('[handleEditOffer] Supabase Response:', { data, error: updateError });
+        
+        if (updateError) {
+          console.error('Supabase Update Error (Edit):', updateError);
+          throw updateError;
+        }
+
+        if (!data || data.length === 0) {
+          toast.error(t('error_generic') + ' (No rows updated)');
+          setLoading(false);
+          return;
+        }
         
         // Update local state immediately using unique ID
         setOffers(prev => prev.map(o => 
@@ -609,8 +724,8 @@ export const MyOffers = () => {
 
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/50 backdrop-blur-sm">
-          <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl overflow-visible animate-in slide-in-from-bottom md:zoom-in duration-300 max-h-[90vh] overflow-y-auto">
-            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center sticky top-0 z-10">
+          <div className="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl animate-in slide-in-from-bottom md:zoom-in duration-300 max-h-[95vh] flex flex-col overflow-visible">
+            <div className="bg-primary p-4 md:p-6 text-white flex justify-between items-center sticky top-0 z-10 rounded-t-3xl md:rounded-t-3xl">
               <h2 className="text-xl font-bold">{t('add_offer')}</h2>
               <button 
                 onClick={() => {
@@ -630,22 +745,23 @@ export const MyOffers = () => {
               </button>
             </div>
             
-            <form onSubmit={handleAddOffer} className="p-6 space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase">{t('search_drug')}</label>
-                {!selectedDrug ? (
-                  <DrugSearch 
-                    ref={drugSearchRef}
-                    onSelect={(drug) => {
-                      setSelectedDrug(drug);
-                      setFormData({ ...formData, price: drug.price || 0 });
-                    }} 
-                    onAddMissing={(query) => {
-                      setMissingItemQuery(query);
-                      setShowMissingModal(true);
-                    }}
-                  />
-                ) : (
+            <div className={cn("flex-1 p-6 custom-scrollbar", !selectedDrug ? "overflow-visible" : "overflow-y-auto")}>
+              <form onSubmit={handleAddOffer} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase">{t('search_drug')}</label>
+                  {!selectedDrug ? (
+                    <DrugSearch 
+                      ref={drugSearchRef}
+                      onSelect={(drug) => {
+                        setSelectedDrug(drug);
+                        setFormData({ ...formData, price: drug.price || 0 });
+                      }} 
+                      onAddMissing={(query) => {
+                        setMissingItemQuery(query);
+                        setShowMissingModal(true);
+                      }}
+                    />
+                  ) : (
                   <div className="space-y-3 animate-in fade-in duration-300">
                     <div className="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 hover:border-primary/30 hover:bg-slate-100/50 transition-all duration-300 group">
                       <div className="flex justify-between items-center mb-4">
@@ -756,7 +872,8 @@ export const MyOffers = () => {
             </form>
           </div>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Edit Modal */}
       {showEditModal && selectedOffer && (
@@ -821,28 +938,32 @@ export const MyOffers = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleFullCancel(t('archive_internal_sale'))}
-                  className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20"
+                  disabled={loading}
+                  className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
                 >
-                  {t('archive_internal_sale')}
+                  {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_internal_sale')}
                 </button>
                 <button
                   onClick={() => handleFullCancel(t('archive_transfer'))}
-                  className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20"
+                  disabled={loading}
+                  className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
                 >
-                  {t('archive_transfer')}
+                  {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_transfer')}
                 </button>
               </div>
               <button
                 onClick={() => handleFullCancel(isRtl ? 'ملغي' : 'Cancelled')}
-                className="py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-slate-500/20"
+                disabled={loading}
+                className="py-3 bg-slate-500 hover:bg-slate-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-slate-500/20 disabled:opacity-50"
               >
-                {isRtl ? 'إلغاء العرض (أرشفة كملغي)' : 'Cancel Offer (Archive as Cancelled)'}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : (isRtl ? 'إلغاء العرض (أرشفة كملغي)' : 'Cancel Offer (Archive as Cancelled)')}
               </button>
               <button
                 onClick={handleDirectDelete}
-                className="py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-500/20"
+                disabled={loading}
+                className="py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-rose-500/20 disabled:opacity-50"
               >
-                {isRtl ? 'حذف نهائي (بدون أرشيف)' : 'Permanent Delete (No Archive)'}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : (isRtl ? 'حذف نهائي (بدون أرشيف)' : 'Permanent Delete (No Archive)')}
               </button>
             </div>
             <button 
@@ -919,10 +1040,10 @@ export const MyOffers = () => {
                   </div>
                   <button
                     onClick={handleUpdateQuantity}
-                    disabled={quantityValue === 0 && stripsValue === 0}
+                    disabled={loading || (quantityValue === 0 && stripsValue === 0)}
                     className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
                   >
-                    {t('dashboard_continue')}
+                    {loading ? <Loader2 className="animate-spin mx-auto" /> : t('dashboard_continue')}
                   </button>
                 </div>
               )}
@@ -949,15 +1070,17 @@ export const MyOffers = () => {
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleDeductArchive(t('archive_internal_sale'))}
-                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20"
+                disabled={loading}
+                className="py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
               >
-                {t('archive_internal_sale')}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_internal_sale')}
               </button>
               <button
                 onClick={() => handleDeductArchive(t('archive_transfer'))}
-                className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20"
+                disabled={loading}
+                className="py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-50"
               >
-                {t('archive_transfer')}
+                {loading ? <Loader2 className="animate-spin mx-auto" /> : t('archive_transfer')}
               </button>
             </div>
             <button 

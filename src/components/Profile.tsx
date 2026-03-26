@@ -134,7 +134,8 @@ export const Profile = () => {
             city: profile.city,
             address: profile.address,
             license_no: profile.license_no.toString().replace(/\D/g, ''),
-            telegram: profile.telegram
+            telegram: profile.telegram,
+            updated_at: new Date().toISOString()
           })
           .eq('pharmacy_id', current_user_id);
 
@@ -208,9 +209,10 @@ export const Profile = () => {
         .from('pharmacies')
         .update({ 
           avatar_url: publicUrl,
-          profile_pic: publicUrl 
+          profile_pic: publicUrl,
+          updated_at: new Date().toISOString()
         })
-        .eq('pharmacy_id', current_user_id);
+        .eq('pharmacy_id', Number(current_user_id));
 
       if (updateError) {
         throw updateError;

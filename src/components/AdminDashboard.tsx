@@ -342,7 +342,13 @@ export const AdminDashboard = () => {
 
     const newStatus = currentStatus === 'blacklisted' ? 'active' : 'blacklisted';
     try {
-      const { error } = await supabase.from('pharmacies').update({ account_status: newStatus }).eq('pharmacy_id', id);
+      const { error } = await supabase
+        .from('pharmacies')
+        .update({ 
+          account_status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('pharmacy_id', Number(id));
       if (error) throw error;
       toast.success(newStatus === 'blacklisted' ? t('admin_blacklist_success') : t('admin_activate_success'));
       fetchData();
@@ -358,7 +364,13 @@ export const AdminDashboard = () => {
     if (!supabase) return;
 
     try {
-      const { error } = await supabase.from('pharmacies').update({ status: !currentStatus }).eq('pharmacy_id', id);
+      const { error } = await supabase
+        .from('pharmacies')
+        .update({ 
+          status: !currentStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('pharmacy_id', Number(id));
       if (error) throw error;
       toast.success(!currentStatus ? t('admin_approve_pharmacy_success') : t('admin_deactivate_pharmacy_success'));
       fetchData();
@@ -372,7 +384,7 @@ export const AdminDashboard = () => {
     if (!supabase) return;
 
     try {
-      const { error } = await supabase.from('pharmacies').delete().eq('pharmacy_id', id);
+      const { error } = await supabase.from('pharmacies').delete().eq('pharmacy_id', Number(id));
       if (error) throw error;
       toast.success(t('admin_delete_pharmacy_success'));
       fetchData();
@@ -411,7 +423,7 @@ export const AdminDashboard = () => {
     if (!supabase) return;
 
     try {
-      const { error } = await supabase.from('system_admins').delete().eq('id', id);
+      const { error } = await supabase.from('system_admins').delete().eq('id', Number(id));
       if (error) throw error;
       toast.success(t('admin_remove_admin_success'));
       fetchData();

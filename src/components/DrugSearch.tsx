@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Search, Loader2, PlusCircle } from 'lucide-react';
+import { Search, Loader2, PlusCircle, X } from 'lucide-react';
 import { getSupabase } from '@/src/lib/supabase';
 import { Drug } from '@/src/types';
 import { cn } from '@/src/lib/utils';
@@ -113,25 +113,48 @@ export const DrugSearch = React.forwardRef<HTMLInputElement, DrugSearchProps>(({
   }, [query, onSelect]);
 
   return (
-    <div ref={wrapperRef} className={cn("relative", className)}>
-      <div className="relative group">
+    <div 
+      ref={wrapperRef} 
+      className={cn(
+        "md:relative", 
+        isOpen ? "fixed top-0 left-0 w-full h-[70vh] z-[9999] bg-white flex flex-col p-4 shadow-2xl md:p-0 md:bg-transparent md:h-auto md:shadow-none md:flex-none md:relative" : "relative",
+        className
+      )}
+    >
+      <div className="relative group shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
         <input
           ref={ref}
           type="text"
           value={query}
+          onFocus={() => setIsOpen(true)}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t('search_placeholder')}
           className="w-full pl-10 pr-10 py-3.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all shadow-sm text-sm md:text-base"
         />
-        {loading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 text-primary animate-spin" size={20} />
-        )}
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          {loading && (
+            <Loader2 className="text-primary animate-spin" size={20} />
+          )}
+          {isOpen && (
+            <button 
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="md:hidden text-slate-400 hover:text-slate-600 p-1"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
       </div>
 
       {isOpen && (
         <div 
-          className="absolute top-full left-0 z-[100] w-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-x-hidden overflow-y-auto custom-scrollbar max-h-[300px] md:max-h-[400px] animate-in fade-in slide-in-from-top-2 duration-200"
+          className={cn(
+            "custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200",
+            "md:absolute md:top-full md:left-0 md:z-[9999] md:w-full md:mt-2 md:bg-white md:border md:border-slate-200 md:rounded-2xl md:shadow-[0_20px_50px_rgba(0,0,0,0.15)] md:max-h-[400px] md:overflow-x-hidden md:overflow-y-auto",
+            "flex-1 overflow-y-auto mt-4 md:mt-0"
+          )}
         >
           {results.length > 0 ? (
             results.map((drug) => (

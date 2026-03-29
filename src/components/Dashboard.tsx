@@ -8,8 +8,6 @@ import {
   DollarSign, 
   AlertCircle,
   Plus,
-  ArrowUpRight,
-  ArrowDownRight,
   Loader2,
   ShieldCheck,
   Star
@@ -19,21 +17,12 @@ import { formatCurrency, cn, getExpiryStatus, formatQuantity } from '@/src/lib/u
 import { getSupabase } from '@/src/lib/supabase';
 import { toast } from 'react-hot-toast';
 
-const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
+const StatCard = ({ title, value, icon: Icon, color }: any) => (
   <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
     <div className="flex justify-between items-start mb-4">
       <div className={cn("p-3 rounded-xl", color)}>
         <Icon size={24} className="text-white" />
       </div>
-      {trend && (
-        <div className={cn(
-          "flex items-center gap-1 text-xs font-bold",
-          trend > 0 ? "text-emerald-600" : "text-rose-600"
-        )}>
-          {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-          {Math.abs(trend)}%
-        </div>
-      )}
     </div>
     <h3 className="text-slate-500 text-sm font-medium mb-1">{title}</h3>
     <p className="text-2xl font-bold text-slate-900">{value}</p>
@@ -49,7 +38,6 @@ export const Dashboard = () => {
     totalRequests: 0,
     totalOffersValue: 0,
     soldItems: 0,
-    soldTrend: 0,
     successScore: 0,
     avgRating: 0
   });
@@ -172,35 +160,11 @@ export const Dashboard = () => {
       
       const soldQuantity = filteredArchive.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
 
-      // Trend Calculation for Sold Quantity
-      const now = new Date();
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-      const currentWeekSales = filteredArchive
-        .filter(item => new Date(item.created_at) >= sevenDaysAgo)
-        .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-
-      const previousWeekSales = filteredArchive
-        .filter(item => {
-          const dt = new Date(item.created_at);
-          return dt >= fourteenDaysAgo && dt < sevenDaysAgo;
-        })
-        .reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-
-      let soldTrend = 0;
-      if (previousWeekSales > 0) {
-        soldTrend = Math.round(((currentWeekSales - previousWeekSales) / previousWeekSales) * 100);
-      } else if (currentWeekSales > 0) {
-        soldTrend = 100; // 100% growth if starting from zero
-      }
-
       setStats({
         totalOffers,
         totalRequests,
         totalOffersValue,
         soldItems: soldQuantity,
-        soldTrend,
         successScore,
         avgRating
       });
@@ -388,28 +352,24 @@ export const Dashboard = () => {
           value={stats.totalOffers} 
           icon={Package} 
           color="bg-blue-500"
-          trend={12}
         />
         <StatCard 
           title={t('stats_total_requests')} 
           value={stats.totalRequests} 
           icon={ShoppingCart} 
           color="bg-indigo-500"
-          trend={-5}
         />
         <StatCard 
           title={t('stats_total_value')} 
           value={formatCurrency(stats.totalOffersValue)} 
           icon={DollarSign} 
           color="bg-emerald-500"
-          trend={8}
         />
         <StatCard 
           title={t('stats_sold_items')} 
           value={stats.soldItems} 
           icon={TrendingUp} 
           color="bg-amber-500"
-          trend={stats.soldTrend}
         />
         <StatCard 
           title={t('success_score')} 
@@ -531,8 +491,8 @@ export const Dashboard = () => {
                         {React.cloneElement(getActivityIcon(item.type) as React.ReactElement, { size: 16 })}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 text-sm md:text-base truncate">{item.english_name}</p>
-                        <p className="text-[10px] md:text-xs text-slate-500 truncate">
+                        <p className="font-semibold text-slate-900 text-sm md:text-base whitespace-normal leading-tight">{item.english_name}</p>
+                        <p className="text-[10px] md:text-xs text-slate-500 whitespace-normal">
                           {new Date(item.created_at).toLocaleDateString()} • {getActivityLabel(item)}
                         </p>
                       </div>
@@ -619,7 +579,7 @@ export const Dashboard = () => {
                       return (
                         <div key={i} className="p-4 hover:bg-slate-50 transition-colors">
                           <div className="flex justify-between items-start mb-1">
-                            <p className="font-bold text-slate-900 text-sm truncate flex-1 me-2">{offer.english_name}</p>
+                            <p className="font-bold text-slate-900 text-sm whitespace-normal leading-tight flex-1 me-2">{offer.english_name}</p>
                             <span className={cn(
                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase shrink-0",
                                status.color === 'rose' && "bg-rose-100 text-rose-700",

@@ -31,7 +31,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
         <div className="flex justify-between items-start mb-3 md:mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5 md:mb-1">
-              <h3 className="font-extrabold md:font-bold text-lg md:text-lg text-slate-900 group-hover:text-primary transition-colors line-clamp-2 leading-tight">
+              <h3 className="font-extrabold md:font-bold text-base md:text-lg text-slate-900 group-hover:text-primary transition-colors whitespace-normal leading-tight">
                 {offer.english_name}
               </h3>
               {isInUserCity && (

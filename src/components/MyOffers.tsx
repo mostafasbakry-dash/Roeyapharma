@@ -111,7 +111,7 @@ export const MyOffers = () => {
         return;
       }
     } catch (err) {
-      console.error('Duplicate check error:', err);
+      // Silent fail
     } finally {
       setLoading(false);
     }
@@ -196,15 +196,10 @@ export const MyOffers = () => {
         action_type: actionType
       };
 
-      console.log('[archiveItem] Operation: INSERT into sales_archive');
-      console.log('[archiveItem] Payload:', payload);
-
       const { data, error: archiveError } = await supabase
         .from('sales_archive')
         .insert([payload])
         .select();
-
-      console.log('[archiveItem] Supabase Response:', { data, error: archiveError });
 
       if (archiveError) {
         toast.error(t('dashboard_archive_failed_msg', { message: archiveError.message }));
@@ -235,7 +230,6 @@ export const MyOffers = () => {
           .eq('id', Number(selectedOffer.id));
 
         if (deleteError) {
-          console.error('Supabase Delete Error (Full Cancel):', deleteError);
           throw deleteError;
         }
 
@@ -246,7 +240,6 @@ export const MyOffers = () => {
         setSelectedOffer(null);
       }
     } catch (err) {
-      console.error('Cancel error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -264,8 +257,6 @@ export const MyOffers = () => {
       await archiveItem(selectedOffer, selectedOffer.quantity, selectedOffer.strips_count || 0, isRtl ? 'ملغي' : 'Cancelled');
 
       const targetId = Number(selectedOffer.id);
-      console.log('[handleDirectDelete] Operation: DELETE from inventory_offers');
-      console.log('[handleDirectDelete] Filter: id =', targetId);
 
       const { data, error: deleteError } = await supabase
         .from('inventory_offers')
@@ -273,10 +264,7 @@ export const MyOffers = () => {
         .eq('id', targetId)
         .select();
 
-      console.log('[handleDirectDelete] Supabase Response:', { data, error: deleteError });
-
       if (deleteError) {
-        console.error('Supabase Delete Error (Direct Delete):', deleteError);
         throw deleteError;
       }
 
@@ -286,7 +274,6 @@ export const MyOffers = () => {
       setShowCancelModal(false);
       setSelectedOffer(null);
     } catch (err) {
-      console.error('Delete error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -296,9 +283,6 @@ export const MyOffers = () => {
   const handleUpdateQuantity = async () => {
     if (!selectedOffer || !quantityAction || loading) return;
     
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
-    const pharmacy_id_num = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
-
     if (quantityAction === 'add') {
       setLoading(true);
       try {
@@ -316,21 +300,13 @@ export const MyOffers = () => {
           };
           const targetId = Number(selectedOffer.id);
 
-          console.log('[handleUpdateQuantity] Operation: UPDATE inventory_offers');
-          console.log('[handleUpdateQuantity] Target ID:', targetId);
-          console.log('[handleUpdateQuantity] Payload:', payload);
-          console.log('[handleUpdateQuantity] Filter: id =', targetId);
-
           const { data, error: updateError } = await supabase
             .from('inventory_offers')
             .update(payload)
             .eq('id', targetId)
             .select();
           
-          console.log('[handleUpdateQuantity] Supabase Response:', { data, error: updateError });
-          
           if (updateError) {
-            console.error('Supabase Update Error (Add):', updateError);
             throw updateError;
           }
 
@@ -350,7 +326,6 @@ export const MyOffers = () => {
           setSelectedOffer(null);
         }
       } catch (err) {
-        console.error('Update quantity error:', err);
         toast.error(t('error_generic'));
       } finally {
         setLoading(false);
@@ -366,9 +341,6 @@ export const MyOffers = () => {
     if (!selectedOffer || loading) return;
     const supabase = getSupabase();
     if (!supabase) return;
-
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
-    const pharmacy_id_num = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
 
     setLoading(true);
     try {
@@ -387,21 +359,13 @@ export const MyOffers = () => {
           updated_at: new Date().toISOString()
         };
 
-        console.log('[handleDeductArchive] Operation: UPDATE inventory_offers');
-        console.log('[handleDeductArchive] Target ID:', targetId);
-        console.log('[handleDeductArchive] Payload:', payload);
-        console.log('[handleDeductArchive] Filter: id =', targetId);
-
         const { data, error: updateError } = await supabase
           .from('inventory_offers')
           .update(payload)
           .eq('id', targetId)
           .select();
 
-        console.log('[handleDeductArchive] Supabase Response:', { data, error: updateError });
-
         if (updateError) {
-          console.error('Supabase Update Error (Deduct):', updateError);
           throw updateError;
         }
 
@@ -414,19 +378,13 @@ export const MyOffers = () => {
         }
       } else {
         // 1. If quantity becomes 0, delete it
-        console.log('[handleDeductArchive] Operation: DELETE from inventory_offers (quantity reached 0)');
-        console.log('[handleDeductArchive] Filter: id =', targetId);
-
         const { data, error: deleteError } = await supabase
           .from('inventory_offers')
           .delete()
           .eq('id', targetId)
           .select();
 
-        console.log('[handleDeductArchive] Supabase Response:', { data, error: deleteError });
-
         if (deleteError) {
-          console.error('Supabase Delete Error (Deduct 0):', deleteError);
           throw deleteError;
         }
         updateSuccess = true;
@@ -451,7 +409,6 @@ export const MyOffers = () => {
         }
       }
     } catch (err) {
-      console.error('Deduct error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -461,8 +418,6 @@ export const MyOffers = () => {
   const handleEditOffer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOffer) return;
-    const isAdmin = localStorage.getItem('is_admin') === 'true';
-    const pharmacy_id_num = (pharmacy_id_str === 'admin' || isAdmin) ? null : parseInt(pharmacy_id_str);
 
     setLoading(true);
     try {
@@ -475,21 +430,13 @@ export const MyOffers = () => {
         };
         const targetId = Number(selectedOffer.id);
 
-        console.log('[handleEditOffer] Operation: UPDATE inventory_offers');
-        console.log('[handleEditOffer] Target ID:', targetId);
-        console.log('[handleEditOffer] Payload:', payload);
-        console.log('[handleEditOffer] Filter: id =', targetId);
-
         const { data, error: updateError } = await supabase
           .from('inventory_offers')
           .update(payload)
           .eq('id', targetId)
           .select();
         
-        console.log('[handleEditOffer] Supabase Response:', { data, error: updateError });
-        
         if (updateError) {
-          console.error('Supabase Update Error (Edit):', updateError);
           throw updateError;
         }
 
@@ -509,7 +456,6 @@ export const MyOffers = () => {
         setSelectedOffer(null);
       }
     } catch (err) {
-      console.error('Edit offer error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);

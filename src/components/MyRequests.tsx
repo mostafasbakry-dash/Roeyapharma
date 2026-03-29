@@ -96,15 +96,10 @@ export const MyRequests = () => {
         action_type: actionType
       };
 
-      console.log('[archiveItem] Operation: INSERT into sales_archive');
-      console.log('[archiveItem] Payload:', payload);
-
       const { data, error: archiveError } = await supabase
         .from('sales_archive')
         .insert([payload])
         .select();
-
-      console.log('[archiveItem] Supabase Response:', { data, error: archiveError });
 
       if (archiveError) {
         toast.error(t('dashboard_archive_failed_msg', { message: archiveError.message }));
@@ -125,8 +120,6 @@ export const MyRequests = () => {
       if (!supabase) return;
 
       const targetId = Number(selectedRequest.id);
-      console.log('[handleFullCancel] Operation: DELETE from inventory_requests');
-      console.log('[handleFullCancel] Filter: id =', targetId);
 
       // 1. Explicitly delete from inventory_requests
       const { data, error: deleteError } = await supabase
@@ -135,10 +128,7 @@ export const MyRequests = () => {
         .eq('id', targetId)
         .select();
       
-      console.log('[handleFullCancel] Supabase Response:', { data, error: deleteError });
-      
       if (deleteError) {
-        console.error('Supabase Delete Error:', deleteError);
         throw deleteError;
       }
 
@@ -181,21 +171,13 @@ export const MyRequests = () => {
           };
           const targetId = Number(selectedRequest.id);
 
-          console.log('[handleUpdateQuantity] Operation: UPDATE inventory_requests');
-          console.log('[handleUpdateQuantity] Target ID:', targetId);
-          console.log('[handleUpdateQuantity] Payload:', payload);
-          console.log('[handleUpdateQuantity] Filter: id =', targetId);
-
           const { data, error: updateError } = await supabase
             .from('inventory_requests')
             .update(payload)
             .eq('id', targetId)
             .select();
           
-          console.log('[handleUpdateQuantity] Supabase Response:', { data, error: updateError });
-          
           if (updateError) {
-            console.error('Supabase Update Error (Add):', updateError);
             throw updateError;
           }
 
@@ -244,19 +226,13 @@ export const MyRequests = () => {
       // 1. Explicitly update or delete from inventory_requests
       let updateSuccess = false;
       if (newQty <= 0 && newStrips <= 0) {
-        console.log('[handleDeductArchive] Operation: DELETE from inventory_requests (quantity reached 0)');
-        console.log('[handleDeductArchive] Filter: id =', targetId);
-
         const { data, error: deleteError } = await supabase
           .from('inventory_requests')
           .delete()
           .eq('id', targetId)
           .select();
 
-        console.log('[handleDeductArchive] Supabase Response:', { data, error: deleteError });
-
         if (deleteError) {
-          console.error('Supabase Delete Error (Deduct):', deleteError);
           throw deleteError;
         }
         updateSuccess = true;
@@ -267,21 +243,13 @@ export const MyRequests = () => {
           updated_at: new Date().toISOString()
         };
 
-        console.log('[handleDeductArchive] Operation: UPDATE inventory_requests');
-        console.log('[handleDeductArchive] Target ID:', targetId);
-        console.log('[handleDeductArchive] Payload:', payload);
-        console.log('[handleDeductArchive] Filter: id =', targetId);
-
         const { data, error: updateError } = await supabase
           .from('inventory_requests')
           .update(payload)
           .eq('id', targetId)
           .select();
 
-        console.log('[handleDeductArchive] Supabase Response:', { data, error: updateError });
-
         if (updateError) {
-          console.error('Supabase Update Error (Deduct):', updateError);
           throw updateError;
         }
 
@@ -334,21 +302,13 @@ export const MyRequests = () => {
         };
         const targetId = Number(selectedRequest.id);
 
-        console.log('[handleEditRequest] Operation: UPDATE inventory_requests');
-        console.log('[handleEditRequest] Target ID:', targetId);
-        console.log('[handleEditRequest] Payload:', payload);
-        console.log('[handleEditRequest] Filter: id =', targetId);
-
         const { data, error: updateError } = await supabase
           .from('inventory_requests')
           .update(payload)
           .eq('id', targetId)
           .select();
         
-        console.log('[handleEditRequest] Supabase Response:', { data, error: updateError });
-        
         if (updateError) {
-          console.error('Supabase Update Error (Edit):', updateError);
           throw updateError;
         }
 

@@ -396,7 +396,7 @@ const resources = {
       "matches": "تطابقات",
       "in_your_city": "في مدينتك",
       "match_found_msg": "تم العثور على أصناف مطابقة لعروضك أو طلباتك!",
-      "dashboard_tagline": "منصة تبادل الأدوية الراكدة للمحترفين",
+      "dashboard_tagline": "المنصة الإحترافية لتبادل الأدوية الراكدة",
       "dashboard_manage_inventory": "إدارة المخزون والأدوية الخاصة بك",
       "dashboard_complete_profile_first": "يرجى إكمال ملف الصيدلية الخاص بك أولاً للبدء في إضافة الأصناف",
       "dashboard_drug_verified": "دواء موثق",

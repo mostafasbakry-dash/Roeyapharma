@@ -404,7 +404,7 @@ export const Dashboard = () => {
                     activeMatchTab === 'requested' ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-50"
                   )}
                 >
-                  {t('requested_offers')}
+                  {t('my_offers')}
                 </button>
                 <button
                   onClick={() => setActiveMatchTab('available')}
@@ -413,7 +413,7 @@ export const Dashboard = () => {
                     activeMatchTab === 'available' ? "bg-primary text-white" : "text-slate-500 hover:bg-slate-50"
                   )}
                 >
-                  {t('available_requests')}
+                  {t('my_requests')}
                 </button>
               </div>
               

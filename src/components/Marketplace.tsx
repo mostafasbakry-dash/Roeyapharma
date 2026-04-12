@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Search, Filter, SlidersHorizontal, MapPin, Percent, X, Loader2, Phone, MessageSquare, Building, ExternalLink } from 'lucide-react';
-import { Offer, Request as MarketRequest, EGYPT_CITIES } from '@/src/types';
+import { Offer, Request as MarketRequest } from '@/src/types';
+import { EGYPT_GOVERNORATES, EGYPT_LOCATIONS } from '@/src/lib/locations';
 import { OfferCard } from '@/src/components/OfferCard';
 import { RatingModal } from '@/src/components/RatingModal';
-import { cn, getDistance, formatQuantity } from '@/src/lib/utils';
+import { cn, formatQuantity } from '@/src/lib/utils';
 import { toast } from 'react-hot-toast';
 import { getSupabase } from '@/src/lib/supabase';
 
@@ -20,6 +21,7 @@ export const Marketplace = () => {
   const [items, setItems] = useState<any[]>([]);
   const [filteredItems, setFilteredItems] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState(barcodeParam || '');
+  const [selectedGovernorate, setSelectedGovernorate] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [minDiscount, setMinDiscount] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
@@ -32,6 +34,11 @@ export const Marketplace = () => {
 
   const userProfile = JSON.parse(localStorage.getItem('pharmacy_profile') || '{}');
   const [loading, setLoading] = useState(true);
+
+  const availableCities = useMemo(() => {
+    if (!selectedGovernorate) return [];
+    return EGYPT_LOCATIONS[selectedGovernorate] || [];
+  }, [selectedGovernorate]);
 
   const confirmTransaction = (item: any, quantity: number, stripsCount: number) => {
     // SECURITY FIX: Submitting a rating should ONLY affect the ratings table. 
@@ -102,13 +109,27 @@ export const Marketplace = () => {
         });
       }
 
-      // Sort by proximity to user's city
+      // Sort by proximity to user's city and governorate
       const sorted = [...allItems].sort((a, b) => {
         const cityA = a.pharmacies?.city || '';
         const cityB = b.pharmacies?.city || '';
-        const distA = getDistance(userProfile.city, cityA);
-        const distB = getDistance(userProfile.city, cityB);
-        return distA - distB;
+        const govA = a.pharmacies?.governorate || '';
+        const govB = b.pharmacies?.governorate || '';
+        
+        const userCity = userProfile.city || '';
+        const userGov = userProfile.governorate || '';
+
+        // Priority 1: Same City
+        if (cityA === userCity && cityB !== userCity) return -1;
+        if (cityB === userCity && cityA !== userCity) return 1;
+
+        // Priority 2: Same Governorate
+        if (govA === userGov && govB !== userGov) return -1;
+        if (govB === userGov && govA !== userGov) return 1;
+
+        // Priority 3: Others (keep original order or sort by governorate then city)
+        if (govA !== govB) return govA.localeCompare(govB);
+        return cityA.localeCompare(cityB);
       });
 
       setItems(sorted);
@@ -135,6 +156,10 @@ export const Marketplace = () => {
         String(o.arabic_name || "").includes(q) || 
         String(o.barcode || "").includes(q)
       );
+    }
+
+    if (selectedGovernorate) {
+      result = result.filter(o => o.pharmacies?.governorate === selectedGovernorate);
     }
 
     if (selectedCity) {
@@ -200,19 +225,39 @@ export const Marketplace = () => {
       </div>
 
       {showFilters && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-6 animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+              <MapPin size={14} />
+              {t('governorate') || 'Governorate'}
+            </label>
+            <select
+              value={selectedGovernorate}
+              onChange={(e) => {
+                setSelectedGovernorate(e.target.value);
+                setSelectedCity('');
+              }}
+              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t('all_governorates') || 'All Governorates'}</option>
+              {EGYPT_GOVERNORATES.map(gov => (
+                <option key={gov} value={gov}>{gov}</option>
+              ))}
+            </select>
+          </div>
           <div className="space-y-2">
             <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
               <MapPin size={14} />
               {t('city')}
             </label>
             <select
+              disabled={!selectedGovernorate}
               value={selectedCity}
               onChange={(e) => setSelectedCity(e.target.value)}
-              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary"
+              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
             >
               <option value="">{t('all_cities')}</option>
-              {EGYPT_CITIES.map(city => (
+              {availableCities.map(city => (
                 <option key={city} value={city}>{city}</option>
               ))}
             </select>
@@ -238,6 +283,7 @@ export const Marketplace = () => {
           <div className="flex items-end">
             <button
               onClick={() => {
+                setSelectedGovernorate('');
                 setSelectedCity('');
                 setMinDiscount(0);
                 setSearchQuery('');

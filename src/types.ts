@@ -15,6 +15,7 @@ export interface PharmacyProfile {
   id: string;
   name: string;
   phone: string;
+  governorate: string;
   city: string;
   address: string;
   license_no: string;
@@ -40,6 +41,7 @@ export interface Offer {
   created_at: string;
   pharmacies?: {
     pharmacy_id: string;
+    governorate: string;
     city: string;
     phone?: string;
     pharmacy_name?: string;

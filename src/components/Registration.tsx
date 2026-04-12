@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Phone, MapPin, Building, CreditCard, Send, Loader2 } from 'lucide-react';
-import { EGYPT_CITIES } from '@/src/types';
+import { EGYPT_GOVERNORATES, EGYPT_LOCATIONS } from '@/src/lib/locations';
+import { SearchableSelect } from '@/src/components/SearchableSelect';
 import { toast } from 'react-hot-toast';
 
 export const Registration = () => {
@@ -30,11 +31,17 @@ export const Registration = () => {
   const [profile, setProfile] = useState({
     name: '',
     phone: '',
+    governorate: '',
     city: '',
     address: '',
     license_no: '',
     telegram: '',
   });
+
+  const availableCities = useMemo(() => {
+    if (!profile.governorate) return [];
+    return EGYPT_LOCATIONS[profile.governorate] || [];
+  }, [profile.governorate]);
 
   const handleRegisterCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,21 +226,27 @@ export const Registration = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase px-1">{t('city')}</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <select
-                      required
-                      value={profile.city || ''}
-                      onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none appearance-none"
-                    >
-                      <option value="">{t('city_placeholder')}</option>
-                      {EGYPT_CITIES.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <SearchableSelect
+                    label={t('governorate') || 'Governorate'}
+                    options={EGYPT_GOVERNORATES}
+                    value={profile.governorate || ''}
+                    onChange={(val) => setProfile({ ...profile, governorate: val, city: '' })}
+                    placeholder={t('select_governorate') || 'Select Governorate'}
+                    icon={<MapPin size={18} />}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <SearchableSelect
+                    label={t('city')}
+                    options={availableCities}
+                    value={profile.city || ''}
+                    onChange={(val) => setProfile({ ...profile, city: val })}
+                    placeholder={t('city_placeholder')}
+                    disabled={!profile.governorate}
+                    icon={<MapPin size={18} />}
+                    required
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase px-1">{t('address')}</label>

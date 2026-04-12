@@ -19,7 +19,11 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
   const isRtl = i18n.language === 'ar';
   const isNearExpiry = offer.expiry_date && (new Date(offer.expiry_date).getTime() - new Date().getTime() < 1000 * 60 * 60 * 24 * 90); // 90 days
   const pharmacyCity = offer.pharmacies?.city || offer.pharmacy_address?.split(',')[0];
+  const pharmacyGov = offer.pharmacies?.governorate;
+  const userGov = JSON.parse(localStorage.getItem('pharmacy_profile') || '{}').governorate;
+
   const isInUserCity = userCity && pharmacyCity && userCity.trim().toLowerCase() === pharmacyCity.trim().toLowerCase();
+  const isInUserGov = userGov && pharmacyGov && userGov.trim().toLowerCase() === pharmacyGov.trim().toLowerCase();
 
   return (
     <div className={cn(
@@ -34,11 +38,15 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
               <h3 className="font-extrabold md:font-bold text-base md:text-lg text-slate-900 group-hover:text-primary transition-colors whitespace-normal leading-tight">
                 {offer.english_name}
               </h3>
-              {isInUserCity && (
+              {isInUserCity ? (
                 <span className="bg-emerald-500 text-white text-[8px] md:text-[10px] px-1.5 md:px-2 py-0.5 rounded-full font-bold animate-pulse shrink-0">
                   {t('in_your_city')}
                 </span>
-              )}
+              ) : isInUserGov ? (
+                <span className="bg-indigo-500 text-white text-[8px] md:text-[10px] px-1.5 md:px-2 py-0.5 rounded-full font-bold shrink-0">
+                  {t('in_your_governorate') || 'In Your Governorate'}
+                </span>
+              ) : null}
             </div>
             <p className="text-[10px] font-mono text-slate-400">{offer.barcode}</p>
           </div>

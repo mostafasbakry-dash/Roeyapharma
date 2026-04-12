@@ -433,7 +433,12 @@ export const Dashboard = () => {
                               {match.matches.length} {t('matches')}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500">{match.barcode}</p>
+                          <div className="flex justify-between items-center">
+                            <p className="text-xs text-slate-500">{match.barcode}</p>
+                            {match.matches[0]?.pharmacies?.city && (
+                              <p className="text-[10px] text-primary font-bold">{match.matches[0].pharmacies.city}</p>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -457,7 +462,12 @@ export const Dashboard = () => {
                               {match.matches.length} {t('matches')}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500">{match.barcode}</p>
+                          <div className="flex justify-between items-center">
+                            <p className="text-xs text-slate-500">{match.barcode}</p>
+                            {match.matches[0]?.pharmacies?.city && (
+                              <p className="text-[10px] text-primary font-bold">{match.matches[0].pharmacies.city}</p>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

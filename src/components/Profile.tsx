@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { User, Camera, Mail, Phone, MapPin, Building, CreditCard, Send, Loader2, ShieldCheck, Lock, Star, TrendingUp } from 'lucide-react';
-import { EGYPT_CITIES } from '@/src/types';
+import { EGYPT_GOVERNORATES, EGYPT_LOCATIONS } from '@/src/lib/locations';
+import { SearchableSelect } from '@/src/components/SearchableSelect';
 import { toast } from 'react-hot-toast';
 import { getSupabase } from '@/src/lib/supabase';
 import { cn } from '@/src/lib/utils';
@@ -19,6 +20,7 @@ export const Profile = () => {
     return {
       name: parsed.name || '',
       phone: parsed.phone || '',
+      governorate: parsed.governorate || '',
       city: parsed.city || '',
       address: parsed.address || '',
       license_no: parsed.license_no || '',
@@ -26,6 +28,11 @@ export const Profile = () => {
       avatar_url: parsed.avatar_url || parsed.profile_pic || ''
     };
   });
+
+  const availableCities = useMemo(() => {
+    if (!profile.governorate) return [];
+    return EGYPT_LOCATIONS[profile.governorate] || [];
+  }, [profile.governorate]);
 
   useEffect(() => {
     const fetchPharmacyData = async () => {
@@ -53,8 +60,8 @@ export const Profile = () => {
         // Fetch Pharmacy Details
         const { data: pharmacyData, error: pharmacyError } = await supabase
           .from('pharmacies')
-          .select('pharmacy_name, phone, city, address, license_no, telegram, avatar_url, profile_pic')
-          .eq('pharmacy_id', current_user_id)
+          .select('pharmacy_name, phone, governorate, city, address, license_no, telegram, avatar_url, profile_pic')
+          .eq('pharmacy_id', Number(current_user_id))
           .maybeSingle();
 
         if (pharmacyError && pharmacyError.code !== 'PGRST116') {
@@ -65,6 +72,7 @@ export const Profile = () => {
           const updatedProfile = {
             name: pharmacyData.pharmacy_name || '',
             phone: pharmacyData.phone || '',
+            governorate: pharmacyData.governorate || '',
             city: pharmacyData.city || '',
             address: pharmacyData.address || '',
             license_no: pharmacyData.license_no || '',
@@ -124,48 +132,31 @@ export const Profile = () => {
       const current_user_id = current_user_id_str ? parseInt(current_user_id_str) : 0;
       
       const supabase = getSupabase();
-      if (supabase) {
-        // Direct Supabase Update for immediate persistence
-        const { error: supabaseError } = await supabase
-          .from('pharmacies')
-          .update({
-            pharmacy_name: profile.name,
-            phone: profile.phone.toString().replace(/\D/g, ''),
-            city: profile.city,
-            address: profile.address,
-            license_no: profile.license_no.toString().replace(/\D/g, ''),
-            telegram: profile.telegram,
-            updated_at: new Date().toISOString()
-          })
-          .eq('pharmacy_id', current_user_id);
+      if (!supabase) throw new Error('Supabase client not found');
 
-        if (supabaseError) {
-          // Silent fail
-        }
-      }
+      const payload = {
+        pharmacy_name: profile.name,
+        phone: profile.phone.toString().replace(/\D/g, ''),
+        address: profile.address,
+        governorate: profile.governorate,
+        city: profile.city,
+        license_no: profile.license_no.toString().replace(/\D/g, ''),
+        telegram: profile.telegram
+      };
 
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/save-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          payload: { 
-            ...profile, 
-            pharmacy_id: current_user_id,
-            phone: profile.phone.toString().replace(/\D/g, '') ? parseInt(profile.phone.toString().replace(/\D/g, '')) : 0,
-            license_no: profile.license_no.toString().replace(/\D/g, '') ? parseInt(profile.license_no.toString().replace(/\D/g, '')) : 0,
-            telegram: profile.telegram
-          } 
-        }),
-      });
+      const targetId = Number(current_user_id);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Update failed: ${response.status} ${errorText}`);
-      }
+      // Direct Supabase Update for immediate persistence
+      const { error: supabaseError } = await supabase
+        .from('pharmacies')
+        .update(payload)
+        .eq('pharmacy_id', targetId);
+
+      if (supabaseError) throw supabaseError;
       
       localStorage.setItem('pharmacy_profile', JSON.stringify(profile));
       window.dispatchEvent(new Event('profileUpdated'));
-      toast.success('Profile updated successfully!');
+      toast.success(t('profile_update_success'));
     } catch (err: any) {
       toast.error(t('error_generic'));
     } finally {
@@ -205,18 +196,18 @@ export const Profile = () => {
         .getPublicUrl(filePath);
 
       // 3. Update Database
+      const payload = { 
+        avatar_url: publicUrl,
+        profile_pic: publicUrl
+      };
+      const targetId = Number(current_user_id);
+
       const { error: updateError } = await supabase
         .from('pharmacies')
-        .update({ 
-          avatar_url: publicUrl,
-          profile_pic: publicUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('pharmacy_id', Number(current_user_id));
+        .update(payload)
+        .eq('pharmacy_id', targetId);
 
-      if (updateError) {
-        throw updateError;
-      }
+      if (updateError) throw updateError;
 
       // 4. Update Local State
       const updatedProfile = { ...profile, avatar_url: publicUrl };
@@ -346,20 +337,27 @@ export const Profile = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-500 uppercase px-1">{t('city')}</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <select
-                      required
-                      value={profile.city}
-                      onChange={(e) => setProfile({ ...profile, city: e.target.value })}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary outline-none appearance-none"
-                    >
-                      {EGYPT_CITIES.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <SearchableSelect
+                    label={t('governorate') || 'Governorate'}
+                    options={EGYPT_GOVERNORATES}
+                    value={profile.governorate}
+                    onChange={(val) => setProfile({ ...profile, governorate: val, city: '' })}
+                    placeholder={t('select_governorate') || 'Select Governorate'}
+                    icon={<MapPin size={18} />}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <SearchableSelect
+                    label={t('city')}
+                    options={availableCities}
+                    value={profile.city}
+                    onChange={(val) => setProfile({ ...profile, city: val })}
+                    placeholder={t('city_placeholder')}
+                    disabled={!profile.governorate}
+                    icon={<MapPin size={18} />}
+                    required
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-500 uppercase px-1">{t('address')}</label>

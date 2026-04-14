@@ -159,9 +159,6 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
     setLoading(true);
     setProgress(0);
 
-    const ADD_OFFER_WEBHOOK_URL = 'https://n8n.srv1168218.hstgr.cloud/webhook/add-offer';
-    const PENDING_ITEMS_WEBHOOK_URL = 'https://n8n.srv1168218.hstgr.cloud/webhook/pending_items';
-
     try {
       const pharmacy_id_str = localStorage.getItem('pharmacy_id');
       const pharmacy_id = pharmacy_id_str ? parseInt(pharmacy_id_str) : 0;
@@ -170,72 +167,59 @@ export const BulkUpload = ({ onSuccess }: BulkUploadProps) => {
       let pendingCount = 0;
       let errorMessages: string[] = [];
 
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase not initialized');
+
       for (let i = 0; i < previewData.length; i++) {
         const row = previewData[i];
         const barcode = row.barcode;
         
         // Intelligent Routing
         if (validBarcodes.has(barcode)) {
-          // 1. Items in Master list -> Send to inventory_offers webhook
+          // 1. Items in Master list -> Direct insert to inventory_offers
           const payload = {
-            pharmacy_id: pharmacy_id,
+            pharmacy_id: Number(pharmacy_id),
             barcode: barcode,
             english_name: row['Drug Name EN'],
             arabic_name: row['Drug Name AR'],
             expiry_date: row.expiry_date,
-            discount: row['Discount %'],
-            quantity: row['Quantity'],
-            price: row['Price']
+            discount: Number(row['Discount %']),
+            quantity: Number(row['Quantity']),
+            price: Number(row['Price'])
           };
 
           try {
-            const response = await fetch(ADD_OFFER_WEBHOOK_URL, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({ payload }),
-            });
+            const { error: insertError } = await supabase
+              .from('inventory_offers')
+              .insert([payload]);
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              if (response.status === 400) {
-                throw new Error(`Invalid data format (likely Expiry Date): ${errorText}`);
-              }
-              throw new Error(errorText || `Server responded with ${response.status}`);
-            }
+            if (insertError) throw insertError;
 
             successCount++;
           } catch (fetchErr: any) {
             errorMessages.push(`Failed to upload [${barcode}]: ${fetchErr.message}`);
           }
         } else {
-          // 2. Items NOT in Master list -> Send to pending_items webhook for Admin review
+          // 2. Items NOT in Master list -> Direct insert to pending_items for Admin review
           const payload = {
-            pharmacy_id: pharmacy_id,
             barcode: barcode,
-            english_name: row['Drug Name EN'] || '',
             arabic_name: row['Drug Name AR'] || '',
+            english_name: row['Drug Name EN'] || '',
+            brand: '', // Brand not in template, using empty string
             price: typeof row['Price'] === 'string' 
               ? parseFloat(row['Price'].replace(/[^\d.]/g, '')) 
-              : Number(row['Price'] || 0)
+              : Number(row['Price'] || 0),
+            final_category: '', // Category not in template
+            status: 'pending',
+            added_by: Number(pharmacy_id)
           };
 
           try {
-            const response = await fetch(PENDING_ITEMS_WEBHOOK_URL, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-              },
-              body: JSON.stringify({ payload }),
-            });
+            const { error: pendingError } = await supabase
+              .from('pending_items')
+              .insert([payload]);
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              throw new Error(errorText || `Server responded with ${response.status}`);
-            }
+            if (pendingError) throw pendingError;
 
             pendingCount++;
           } catch (fetchErr: any) {

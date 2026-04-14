@@ -60,24 +60,21 @@ export const AddRequestModal = ({ onClose, onSuccess, onAddMissing }: AddRequest
         return;
       }
 
-      // 2. Proceed with Webhook if no duplicate exists
+      // 2. Proceed with direct Supabase insert if no duplicate exists
       const payload = {
-        pharmacy_id: pharmacy_id,
-        drug_id: selectedDrug.id,
+        pharmacy_id: Number(pharmacy_id) || 0,
         english_name: selectedDrug.name_en,
         arabic_name: selectedDrug.name_ar,
         barcode: normalizedBarcode,
-        quantity: quantity,
-        strips_count: stripsCount
+        quantity: Number(quantity),
+        strips_count: Number(stripsCount)
       };
 
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/add-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload }),
-      });
+      const { error: insertError } = await supabase
+        .from('inventory_requests')
+        .insert([payload]);
 
-      if (!response.ok) throw new Error('Failed to add request');
+      if (insertError) throw insertError;
 
       toast.success(t('success_added'));
       onSuccess();

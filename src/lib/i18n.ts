@@ -284,6 +284,9 @@ const resources = {
       "admin_panel": "Admin Panel",
       "loading_pharmacy_info": "Loading pharmacy info...",
       "pharmacy_info_not_found": "Pharmacy information not found",
+      "expiry_validation_title": "Policy Violation",
+      "expiry_validation_msg": "Sorry, the product's expiry date is less than two months, which violates the platform's policy. Please select a product with a longer shelf life.",
+      "ok": "OK",
     }
   },
   ar: {
@@ -567,6 +570,9 @@ const resources = {
       "admin_panel": "لوحة التحكم",
       "loading_pharmacy_info": "جاري تحميل معلومات الصيدلية...",
       "pharmacy_info_not_found": "لم يتم العثور على معلومات الصيدلية",
+      "expiry_validation_title": "مخالفة السياسة",
+      "expiry_validation_msg": "عذراً، تاريخ انتهاء صلاحية الصنف أقل من شهرين، وهذا يخالف سياسة المنصة. يرجى اختيار صنف بصلاحية أطول.",
+      "ok": "موافق",
     }
   }
 };

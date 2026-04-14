@@ -5,6 +5,7 @@ import { Mail, Lock, User, Phone, MapPin, Building, CreditCard, Send, Loader2 } 
 import { EGYPT_GOVERNORATES, EGYPT_LOCATIONS } from '@/src/lib/locations';
 import { SearchableSelect } from '@/src/components/SearchableSelect';
 import { toast } from 'react-hot-toast';
+import { getSupabase } from '@/src/lib/supabase';
 
 export const Registration = () => {
   const { t, i18n } = useTranslation();
@@ -47,36 +48,43 @@ export const Registration = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase not initialized');
+
       // Generate a unique numeric pharmacy_id based on timestamp
       const pharmacy_id = Math.floor(Date.now() / 1000);
-      
       const normalizedEmail = credentials.email.trim().toLowerCase();
       
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          payload: { 
-            ...credentials,
-            email: normalizedEmail,
-            pharmacy_id 
-          } 
-        }),
-      });
+      console.log('[APP-DEBUG][AUTH] Starting SignUp for:', normalizedEmail);
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        if (response.status === 409 || errorData.message?.toLowerCase().includes('already registered') || errorData.error?.toLowerCase().includes('duplicate')) {
+      // 1. Supabase Auth Sign Up
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password: credentials.password,
+      });
+
+      if (authError) {
+        console.error('[APP-DEBUG][AUTH] SignUp Error:', authError);
+        if (authError.message.includes('already registered')) {
           toast.error(t('register_email_exists'));
-          return;
+        } else {
+          toast.error(authError.message);
         }
-        throw new Error(`Registration failed: ${response.status}`);
+        return;
+      }
+
+      // Ensure user was created or at least request sent
+      if (!authData.user && !authData.session) {
+        // In some cases (email confirmation), user might be null but error is null too
+        console.log('[APP-DEBUG][AUTH] SignUp successful (Pending confirmation or session-less)');
       }
       
       localStorage.setItem('temp_pharmacy_id', pharmacy_id.toString());
+      localStorage.setItem('temp_email', normalizedEmail);
       setStep(2);
       toast.success(t('register_success_step1'));
     } catch (err: any) {
+      console.error('[APP-DEBUG][AUTH] Unexpected SignUp Error:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);
@@ -87,41 +95,64 @@ export const Registration = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase not initialized');
+
       const pharmacy_id_str = localStorage.getItem('temp_pharmacy_id');
       const pharmacy_id = pharmacy_id_str ? parseInt(pharmacy_id_str) : 0;
+      const normalizedEmail = localStorage.getItem('temp_email') || credentials.email.trim().toLowerCase();
       
-      // Send data to n8n webhook to save profile and link with credentials
-      // n8n will use the email to find the existing record in the 'credentials' table 
-      // and update its 'pharmacy_id' to match the one generated during registration.
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/save-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          payload: { 
-            ...profile, 
-            pharmacy_id,
-            phone: profile.phone.replace(/\D/g, '') ? parseInt(profile.phone.replace(/\D/g, '')) : 0,
-            license_no: profile.license_no.replace(/\D/g, '') ? parseInt(profile.license_no.replace(/\D/g, '')) : 0,
-            telegram: profile.telegram,
-            email: credentials.email.trim().toLowerCase(), // Ensure email is trimmed and lowercase for linkage
-            status: false
-          } 
-        }),
-      });
+      // DEBUGGING: Check session status
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[APP-DEBUG][AUTH] Session status before profile save:', session ? 'ACTIVE' : 'NONE (Anon Mode)');
+      console.log('[APP-DEBUG][REGISTRATION] Using Pharmacy ID:', pharmacy_id);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Profile save failed: ${response.status} ${errorText}`);
+      // 2. Insert into pharmacies table
+      const { error: pharmacyError } = await supabase
+        .from('pharmacies')
+        .insert([{
+          pharmacy_name: profile.name,
+          email: normalizedEmail,
+          pharmacy_id: Number(pharmacy_id),
+          phone: profile.phone.replace(/\D/g, '') ? Number(profile.phone.replace(/\D/g, '')) : 0,
+          address: profile.address,
+          governorate: profile.governorate,
+          city: profile.city,
+          license_no: profile.license_no.replace(/\D/g, '') ? Number(profile.license_no.replace(/\D/g, '')) : 0,
+          telegram: profile.telegram,
+          status: false
+        }]);
+
+      if (pharmacyError) {
+        console.error('[APP-DEBUG][SUPABASE] Pharmacy insert failed:', pharmacyError);
+        throw pharmacyError;
+      }
+
+      // 3. Insert into credentials table
+      const { error: credentialsError } = await supabase
+        .from('credentials')
+        .insert([{
+          email: normalizedEmail,
+          password: credentials.password,
+          pharmacy_id: Number(pharmacy_id)
+        }]);
+
+      if (credentialsError) {
+        console.error('[APP-DEBUG][SUPABASE] Credentials insert failed:', credentialsError);
+        throw credentialsError;
       }
       
       localStorage.setItem('pharmacy_id', pharmacy_id.toString());
       localStorage.setItem('pharmacy_profile', JSON.stringify(profile));
-      localStorage.removeItem('is_admin'); // Explicitly ensure not admin
+      localStorage.removeItem('is_admin'); 
       localStorage.removeItem('admin_email');
+      localStorage.removeItem('temp_pharmacy_id');
+      localStorage.removeItem('temp_email');
       
       toast.success(t('register_success_complete'));
       navigate('/');
     } catch (err: any) {
+      console.error('[APP-DEBUG][GLOBAL-ERROR] Registration flow failed:', err);
       toast.error(t('error_generic'));
     } finally {
       setLoading(false);

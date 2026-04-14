@@ -27,7 +27,6 @@ export interface PharmacyProfile {
 export interface Offer {
   id: string;
   pharmacy_id: string;
-  drug_id: string;
   english_name: string;
   arabic_name: string;
   barcode: string;
@@ -57,7 +56,6 @@ export interface Offer {
 export interface Request {
   id: string;
   pharmacy_id: string;
-  drug_id: string;
   english_name: string;
   arabic_name: string;
   barcode: string;

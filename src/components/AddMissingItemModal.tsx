@@ -38,7 +38,8 @@ export const AddMissingItemModal = ({ onClose, initialQuery }: AddMissingItemMod
       const supabase = getSupabase();
       if (!supabase) throw new Error('Supabase not initialized');
 
-      const pharmacy_id = localStorage.getItem('pharmacy_id');
+      const pharmacy_id_str = localStorage.getItem('pharmacy_id');
+      const pharmacy_id = pharmacy_id_str ? parseInt(pharmacy_id_str) : 0;
       
       const { error } = await supabase
         .from('pending_items')
@@ -49,6 +50,7 @@ export const AddMissingItemModal = ({ onClose, initialQuery }: AddMissingItemMod
           brand: formData.brand,
           price: parseFloat(formData.price),
           final_category: formData.category,
+          status: 'pending',
           added_by: pharmacy_id
         }]);
 

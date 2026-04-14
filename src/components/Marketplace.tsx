@@ -346,14 +346,14 @@ export const Marketplace = () => {
             <div className="p-4 md:p-6 space-y-4 md:space-y-6">
               <div className="flex items-center gap-3 md:gap-4">
                 <div className="w-12 h-12 md:w-16 md:h-16 bg-slate-100 rounded-xl md:rounded-2xl flex items-center justify-center text-primary">
-                  <Building size={24} md:size={32} />
+                  <Building size={32} />
                 </div>
                 <div>
                   <h3 className="text-lg md:text-xl font-bold text-slate-900">
                     {selectedItem.pharmacies?.pharmacy_name || selectedItem.pharmacy_name || t('unknown_pharmacy')}
                   </h3>
                   <p className="text-xs md:text-sm text-slate-500 flex items-center gap-1">
-                    <MapPin size={12} md:size={14} />
+                    <MapPin size={14} />
                     {selectedItem.pharmacies?.city || selectedItem.city || t('unknown_location')}, {t('egypt')}
                   </p>
                 </div>
@@ -363,7 +363,7 @@ export const Marketplace = () => {
                 <div className="p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100 space-y-2 md:space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 md:gap-3 text-slate-600">
-                      <Phone size={16} md:size={18} className="text-primary" />
+                      <Phone size={18} className="text-primary" />
                       <span className="text-sm font-medium">{selectedItem.pharmacies?.phone || t('not_provided')}</span>
                     </div>
                     {selectedItem.pharmacies?.phone && (
@@ -371,14 +371,14 @@ export const Marketplace = () => {
                         href={`tel:${selectedItem.pharmacies.phone}`}
                         className="p-2 bg-white border border-slate-200 rounded-lg text-primary hover:bg-primary hover:text-white transition-all"
                       >
-                        <Phone size={14} md:size={16} />
+                        <Phone size={16} />
                       </a>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 md:gap-3 text-slate-600">
-                      <MessageSquare size={16} md:size={18} className="text-sky-500" />
+                      <MessageSquare size={18} className="text-sky-500" />
                       <span className="text-sm font-medium">
                         {selectedItem.pharmacies?.telegram ? `@${selectedItem.pharmacies.telegram}` : t('not_provided')}
                       </span>
@@ -390,7 +390,7 @@ export const Marketplace = () => {
                         rel="noopener noreferrer"
                         className="p-2 bg-white border border-slate-200 rounded-lg text-sky-500 hover:bg-sky-500 hover:text-white transition-all"
                       >
-                        <ExternalLink size={14} md:size={16} />
+                        <ExternalLink size={16} />
                       </a>
                     )}
                   </div>

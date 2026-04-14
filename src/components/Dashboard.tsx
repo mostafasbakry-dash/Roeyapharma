@@ -51,25 +51,6 @@ export const Dashboard = () => {
   const [activeMatchTab, setActiveMatchTab] = useState<'requested' | 'available'>('requested');
   const [telegram, setTelegram] = useState<string | null>(null);
 
-  const sendTelegramWebhook = async (chatId: string, message: string) => {
-    if (!chatId) return;
-
-    const payload = {
-      chat_id: chatId,
-      message: message
-    };
-    
-    try {
-      await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/sendtelegram', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } catch (err) {
-      // Silent error logging for network issues
-    }
-  };
-
   const fetchStats = useCallback(async () => {
     const supabase = getSupabase();
     if (!supabase) return;
@@ -260,8 +241,6 @@ export const Dashboard = () => {
             const newMatches = allMatchPairs.filter(pair => !notifiedMatches.includes(pair));
 
             if (newMatches.length > 0) {
-              sendTelegramWebhook(chatId, t('telegram_match_msg'));
-              
               // Update notified matches in localStorage
               const updatedNotifiedMatches = Array.from(new Set([...notifiedMatches, ...allMatchPairs]));
               localStorage.setItem(notifiedMatchesKey, JSON.stringify(updatedNotifiedMatches));
@@ -498,7 +477,7 @@ export const Dashboard = () => {
                         "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0",
                         item.type === 'archive' ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500"
                       )}>
-                        {React.cloneElement(getActivityIcon(item.type) as React.ReactElement, { size: 16 })}
+                        {React.cloneElement(getActivityIcon(item.type) as React.ReactElement<any>, { size: 16 })}
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900 text-sm md:text-base whitespace-normal leading-tight">{item.english_name}</p>
@@ -627,7 +606,7 @@ export const Dashboard = () => {
           <div className="bg-white w-full md:max-w-2xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
             <div className="bg-rose-500 p-4 md:p-6 text-white flex justify-between items-center">
               <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                <AlertCircle size={20} md:size={24} />
+                <AlertCircle size={24} />
                 {t('near_expiry_alert')}
               </h2>
               <button onClick={() => setShowExpiryModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
@@ -651,7 +630,7 @@ export const Dashboard = () => {
                       <div key={i} className="flex items-center justify-between p-3 md:p-4 border border-slate-100 rounded-xl hover:bg-slate-50 transition-colors">
                         <div className="flex items-center gap-3 md:gap-4">
                           <div className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-rose-100 text-rose-600 shrink-0">
-                            <AlertCircle size={16} md:size={20} />
+                            <AlertCircle size={20} />
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 text-sm md:text-base">{offer.english_name}</p>
@@ -682,7 +661,7 @@ export const Dashboard = () => {
           <div className="bg-white w-full md:max-w-2xl rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom md:zoom-in duration-300">
             <div className="bg-emerald-500 p-4 md:p-6 text-white flex justify-between items-center">
               <h2 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                <TrendingUp size={20} md:size={24} />
+                <TrendingUp size={24} />
                 {t('optimization_tips')}
               </h2>
               <button onClick={() => setShowOptimizationModal(false)} className="hover:bg-white/20 p-1 rounded-lg">
@@ -706,7 +685,7 @@ export const Dashboard = () => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 md:gap-3">
                             <div className="w-6 h-6 md:w-8 md:h-8 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                              <TrendingUp size={14} md:size={16} />
+                              <TrendingUp size={16} />
                             </div>
                             <p className="font-bold text-slate-900 text-sm md:text-base">{offer.english_name}</p>
                           </div>
@@ -717,7 +696,7 @@ export const Dashboard = () => {
                         </div>
                         <div className="bg-slate-50 p-2 md:p-3 rounded-lg flex items-start gap-2 md:gap-3">
                           <div className="mt-1 p-1 bg-white rounded shadow-sm text-emerald-600 shrink-0">
-                            <Star size={12} md:size={14} />
+                            <Star size={14} />
                           </div>
                           <div>
                             <p className="text-xs md:text-sm font-bold text-slate-900">{t('recommendation')}</p>

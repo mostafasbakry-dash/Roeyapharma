@@ -70,7 +70,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
         <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 md:mb-6">
           {offer.expiry_date && (
             <div className="flex items-center gap-1.5 md:gap-2 text-slate-600">
-              <Calendar size={14} md:size={16} className="text-slate-400" />
+              <Calendar size={16} className="text-slate-400" />
               <div className="flex flex-col">
                 <span className="text-[8px] md:text-[10px] uppercase text-slate-400 font-bold">{t('expiry_date')}</span>
                 <span className="text-xs md:text-sm font-medium">{format(new Date(offer.expiry_date), 'MMM yyyy')}</span>
@@ -79,7 +79,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
           )}
           {offer.price !== undefined && (
             <div className="flex items-center gap-1.5 md:gap-2 text-slate-600">
-              <Tag size={14} md:size={16} className="text-slate-400" />
+              <Tag size={16} className="text-slate-400" />
               <div className="flex flex-col">
                 <span className="text-[8px] md:text-[10px] uppercase text-slate-400 font-bold">{t('price')}</span>
                 <span className="text-xs md:text-sm font-bold text-primary">{formatCurrency(offer.price)}</span>
@@ -91,7 +91,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
         {!isOwner && (
           <div className="space-y-2 md:space-y-3 pt-3 md:pt-4 border-t border-slate-100">
             <div className="flex items-start gap-2 text-slate-600">
-              <Building2 size={14} md:size={16} className="text-slate-400 mt-0.5 md:mt-1 shrink-0" />
+              <Building2 size={16} className="text-slate-400 mt-0.5 md:mt-1 shrink-0" />
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                   <span className="text-xs md:text-sm font-semibold text-slate-800 truncate max-w-[120px] md:max-w-none">
@@ -103,8 +103,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            size={10}
-                            md:size={12}
+                            size={12}
                             className={cn(
                               star <= Math.round(offer.pharmacies?.rating || 0) 
                                 ? "fill-amber-400 text-amber-400" 
@@ -120,12 +119,12 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
                   )}
                   {offer.pharmacies?.is_verified && (
                     <div className="bg-emerald-100 text-emerald-600 p-0.5 rounded-full" title={t('verified_pharmacy')}>
-                      <ShieldCheck size={10} md:size={12} />
+                      <ShieldCheck size={12} />
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-1 text-[10px] md:text-xs text-slate-500">
-                  <MapPin size={10} md:size={12} />
+                  <MapPin size={12} />
                   <span className="truncate">
                     {offer.pharmacies?.city || offer.pharmacy_address?.split(',')[0] || 'Unknown Location'}
                   </span>
@@ -144,7 +143,7 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
               className="w-full py-2.5 md:py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm md:text-base"
             >
               {actionLabel || t('view_details')}
-              <ArrowRight size={16} md:size={18} className={cn(isRtl && "rotate-180")} />
+              <ArrowRight size={18} className={cn(isRtl && "rotate-180")} />
             </button>
           )}
           

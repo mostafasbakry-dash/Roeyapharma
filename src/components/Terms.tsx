@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Shield, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { getSupabase } from '@/src/lib/supabase';
+import ReactMarkdown from 'react-markdown';
 
 export const Terms = () => {
   const { t, i18n } = useTranslation();
@@ -13,44 +14,30 @@ export const Terms = () => {
 
   useEffect(() => {
     const fetchLegalContent = async () => {
+      setLoading(true);
       try {
         const supabase = getSupabase();
         if (!supabase) throw new Error('Supabase not initialized');
 
         const { data, error } = await supabase
           .from('legal_content')
-          .select('*')
-          .eq('type', 'terms')
+          .select('content_ar, content_en')
+          .eq('type', 'terms_and_conditions')
           .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') throw error;
+        if (error) throw error;
+        
         if (data) {
           setContent({
             ar: data.content_ar,
             en: data.content_en
           });
+        } else {
+          throw new Error('No terms and conditions found');
         }
       } catch (err: any) {
-        if (err?.code !== 'PGRST116' && err?.status !== 406) {
-          // Silent fail
-        }
+        console.error('[APP-DEBUG][LEGAL] Fetch failed:', err);
         setError(err.message);
-        // Fallback content if fetch fails
-        setContent({
-          ar: `الشروط والأحكام
-اللغة العربية
-1. طبيعة الخدمة: يعد التطبيق منصة إلكترونية (وسيط تقني) تهدف لتسهيل التواصل بين الصيدليات المسجلة لتبادل الأدوية الراكدة. التطبيق ليس طرفاً في أي عملية تبادل، ولا يعد صيدلية أو مخزن أدوية.
-2. إخلاء المسؤولية عن عملية التبادل: تتم عمليات التبادل بناءً على الاتفاق المباشر بين الصيدليات. ولا يتحقق التطبيق من جودة الأدوية، تاريخ صلاحيتها، ظروف تخزينها، أو مشروعية تداولها. تقع المسؤولية كاملة على عاتق الصيدليات المتبادلة (المرسل والمستقبل).
-3. المعاملات المالية: أي اتفاقات مالية أو تسويات نقدية تتم بين الصيدليات هي شأن داخلي بينهما. لا يتقاضى التطبيق أي عمولات عن عمليات التبادل، ولا يتدخل في تحديد الأسعار أو التحصيل المالي.
-4. الخصومات والتسعير: للصيدليات الحق الكامل في التفاوض والنقاش حول قيمة الخصم الممنوح على الأدوية المتبادلة دون أدنى تدخل أو فرض قيود من إدارة التطبيق.
-5. الشحن والتوصيل: الصيدليات هي المسؤولة مسؤولية كاملة عن اختيار وسيلة النقل والتوصيل المناسبة وضمان سلامة الدواء أثناء النقل. لا يوفر التطبيق خدمات شحن ولا يتحمل مسؤولية تلف أو ضياع الشحنات.`,
-          en: `English Version
-1. Nature of Service: The Application is a digital platform (technical intermediary) designed to facilitate communication between registered pharmacies for the exchange of stagnant medications. The Application is not a party to any exchange process and is not classified as a pharmacy or a drug store.
-2. Disclaimer of Exchange Process: Exchanges are conducted based on direct agreements between pharmacies. The Application does not verify the quality, expiry dates, storage conditions, or legality of the medications. Full responsibility lies with the participating pharmacies (Sender and Receiver).
-3. Financial Transactions: Any financial agreements or monetary settlements between pharmacies are strictly private matters between them. The Application does not charge any commissions on exchanges and does not intervene in pricing or payment collection.
-4. Discounts and Pricing: Pharmacies have the full right to negotiate and discuss discount rates on exchanged medications without any interference or restrictions from the Application management.
-5. Shipping and Delivery: Pharmacies are solely responsible for choosing the method of transport and delivery, ensuring the safety of the medication during transit. The Application does not provide shipping services and holds no liability for damaged or lost shipments.`
-        });
       } finally {
         setLoading(false);
       }
@@ -87,15 +74,16 @@ export const Terms = () => {
               <Loader2 className="animate-spin text-primary" size={40} />
               <p className="text-slate-500 font-medium">{t('terms_loading')}</p>
             </div>
-          ) : error && !content ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4 text-rose-500">
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4 text-rose-500 text-center">
               <AlertCircle size={40} />
               <p className="font-medium">{t('terms_failed')}</p>
+              <p className="text-sm text-slate-400">{error}</p>
             </div>
           ) : (
             <div className="prose prose-slate max-w-none">
-              <div className="whitespace-pre-wrap text-slate-700 leading-relaxed text-lg">
-                {currentContent}
+              <div className="text-slate-700 leading-relaxed text-lg">
+                <ReactMarkdown>{currentContent || ''}</ReactMarkdown>
               </div>
             </div>
           )}

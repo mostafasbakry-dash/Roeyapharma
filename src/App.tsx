@@ -14,6 +14,8 @@ import { Login } from './components/Login';
 import { Registration } from './components/Registration';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ActivationPending } from './components/ActivationPending';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { DebugManager } from './components/DebugManager';
 import { useTranslation } from 'react-i18next';
 import { getSupabase } from '@/src/lib/supabase';
 import { toast } from 'react-hot-toast';
@@ -158,26 +160,30 @@ export default function App() {
   }, [i18n.language]);
 
   return (
-    <BrowserRouter>
-      <Toaster position="top-center" />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Registration />} />
-        <Route path="/terms" element={<Terms />} />
-        <Route path="/activation-pending" element={<ActivationPending />} />
-        
-        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
-        <Route path="/my-offers" element={<ProtectedRoute><MyOffers /></ProtectedRoute>} />
-        <Route path="/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
-        <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-        
-        <Route path="/admin-control-panel-988" element={<ProtectedRouteAdmin><AdminDashboard /></ProtectedRouteAdmin>} />
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <DebugManager>
+          <Toaster position="top-center" />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Registration />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/activation-pending" element={<ActivationPending />} />
+            
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><Marketplace /></ProtectedRoute>} />
+            <Route path="/my-offers" element={<ProtectedRoute><MyOffers /></ProtectedRoute>} />
+            <Route path="/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            
+            <Route path="/admin-control-panel-988" element={<ProtectedRouteAdmin><AdminDashboard /></ProtectedRouteAdmin>} />
+            
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </DebugManager>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

@@ -5,7 +5,7 @@ import { Package, Plus, Trash2, Edit2, Loader2, AlertCircle, X, ShieldCheck, Inf
 import { Offer, Drug } from '@/src/types';
 import { DrugSearch } from '@/src/components/DrugSearch';
 import { toast } from 'react-hot-toast';
-import { format } from 'date-fns';
+import { format, differenceInDays, parseISO } from 'date-fns';
 import { BulkUpload } from '@/src/components/BulkUpload';
 import { cn, getExpiryStatus, formatQuantity } from '@/src/lib/utils';
 import { getSupabase } from '@/src/lib/supabase';
@@ -27,6 +27,7 @@ export const MyOffers = () => {
   const [showQuantityModal, setShowQuantityModal] = useState(false);
   const [showDeductActionModal, setShowDeductActionModal] = useState(false);
   const [showDuplicateConfirmModal, setShowDuplicateConfirmModal] = useState(false);
+  const [showExpiryValidationModal, setShowExpiryValidationModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<Offer | null>(null);
   const [quantityAction, setQuantityAction] = useState<'add' | 'deduct' | null>(null);
   const [quantityValue, setQuantityValue] = useState(1);
@@ -62,7 +63,15 @@ export const MyOffers = () => {
       if (fetchError) {
         // Silent fail
       }
-      setOffers(data || []);
+
+      // Map data to match Offer type requirements
+      const mappedOffers: Offer[] = (data || []).map(item => ({
+        ...item,
+        pharmacy_name: '', // Will be filled by the UI if needed, or we could fetch it
+        pharmacy_address: ''
+      }));
+
+      setOffers(mappedOffers);
     } catch (err) {
       setError(err);
       toast.error(t('error_generic'));
@@ -78,6 +87,15 @@ export const MyOffers = () => {
   const handleAddOffer = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!selectedDrug) return;
+
+    // 1. Expiry Date Validation (Min 62 days)
+    const expiryDate = formData.expiry_date.length === 7 ? `${formData.expiry_date}-01` : formData.expiry_date;
+    const daysDiff = differenceInDays(parseISO(expiryDate), new Date());
+    
+    if (daysDiff < 62) {
+      setShowExpiryValidationModal(true);
+      return;
+    }
 
     const normalizedBarcode = selectedDrug.barcode ? selectedDrug.barcode.toString().replace(/\D/g, '') : "0";
     const pharmacy_id_str = localStorage.getItem('pharmacy_id') || '';
@@ -118,27 +136,26 @@ export const MyOffers = () => {
 
     setLoading(true);
     try {
+      const supabase = getSupabase();
+      if (!supabase) throw new Error('Supabase not initialized');
+
       const payload = {
-        expiry_date: formData.expiry_date,
-        pharmacy_id: pharmacy_id || 0,
-        drug_id: selectedDrug.id,
+        expiry_date: formData.expiry_date.length === 7 ? `${formData.expiry_date}-01` : formData.expiry_date,
+        pharmacy_id: Number(pharmacy_id) || 0,
         english_name: selectedDrug.name_en || '',
         arabic_name: selectedDrug.name_ar || '',
-        manufacturer: selectedDrug.manufacturer || '',
         barcode: normalizedBarcode,
-        quantity: formData.quantity,
-        strips_count: formData.strips_count,
-        price: formData.price,
-        discount: formData.discount
+        quantity: Number(formData.quantity),
+        strips_count: Number(formData.strips_count),
+        price: Number(formData.price),
+        discount: Number(formData.discount)
       };
 
-      const response = await fetch('https://n8n.srv1168218.hstgr.cloud/webhook/add-offer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload }),
-      });
+      const { error: insertError } = await supabase
+        .from('inventory_offers')
+        .insert([payload]);
 
-      if (!response.ok) throw new Error('Failed to add offer');
+      if (insertError) throw insertError;
 
       toast.success(t('success_added'));
       
@@ -1065,6 +1082,33 @@ export const MyOffers = () => {
             >
               {i18n.language === 'ar' ? 'إغلاق' : 'Close'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Expiry Validation Modal */}
+      {showExpiryValidationModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in duration-200">
+            <div className="flex flex-col items-center text-center gap-6">
+              <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center text-rose-500">
+                <AlertCircle size={48} />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-slate-900">
+                  {t('expiry_validation_title')}
+                </h3>
+                <p className="text-slate-600 leading-relaxed">
+                  {t('expiry_validation_msg')}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowExpiryValidationModal(false)}
+                className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-emerald-200 active:scale-95"
+              >
+                {t('ok')}
+              </button>
+            </div>
           </div>
         </div>
       )}

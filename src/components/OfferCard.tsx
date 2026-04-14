@@ -126,7 +126,9 @@ export const OfferCard = ({ offer, onAction, onConfirm, actionLabel, isOwner, us
                 <div className="flex items-center gap-1 text-[10px] md:text-xs text-slate-500">
                   <MapPin size={12} />
                   <span className="truncate">
-                    {offer.pharmacies?.city || offer.pharmacy_address?.split(',')[0] || 'Unknown Location'}
+                    {offer.pharmacies?.governorate && offer.pharmacies?.city 
+                      ? `${offer.pharmacies.governorate} - ${offer.pharmacies.city}`
+                      : offer.pharmacies?.city || offer.pharmacy_address?.split(',')[0] || 'Unknown Location'}
                   </span>
                 </div>
               </div>

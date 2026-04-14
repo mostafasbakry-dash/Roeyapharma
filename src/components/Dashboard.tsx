@@ -178,8 +178,8 @@ export const Dashboard = () => {
       }
 
       // 6. Smart Match Logic
-      const { data: allOffersData } = await supabase.from('inventory_offers').select('*');
-      const { data: allRequestsData } = await supabase.from('inventory_requests').select('*');
+      const { data: allOffersData } = await supabase.from('inventory_offers').select('*, pharmacies(pharmacy_id, pharmacy_name, city, governorate)');
+      const { data: allRequestsData } = await supabase.from('inventory_requests').select('*, pharmacies(pharmacy_id, pharmacy_name, city, governorate)');
 
       if (allOffersData && allRequestsData) {
         const myOffers = allOffersData.filter(o => o.pharmacy_id === current_user_id);
@@ -415,7 +415,11 @@ export const Dashboard = () => {
                           <div className="flex justify-between items-center">
                             <p className="text-xs text-slate-500">{match.barcode}</p>
                             {match.matches[0]?.pharmacies?.city && (
-                              <p className="text-[10px] text-primary font-bold">{match.matches[0].pharmacies.city}</p>
+                              <p className="text-[10px] text-primary font-bold">
+                                {match.matches[0].pharmacies.governorate 
+                                  ? `${match.matches[0].pharmacies.governorate} - ${match.matches[0].pharmacies.city}`
+                                  : match.matches[0].pharmacies.city}
+                              </p>
                             )}
                           </div>
                         </div>
@@ -444,7 +448,11 @@ export const Dashboard = () => {
                           <div className="flex justify-between items-center">
                             <p className="text-xs text-slate-500">{match.barcode}</p>
                             {match.matches[0]?.pharmacies?.city && (
-                              <p className="text-[10px] text-primary font-bold">{match.matches[0].pharmacies.city}</p>
+                              <p className="text-[10px] text-primary font-bold">
+                                {match.matches[0].pharmacies.governorate 
+                                  ? `${match.matches[0].pharmacies.governorate} - ${match.matches[0].pharmacies.city}`
+                                  : match.matches[0].pharmacies.city}
+                              </p>
                             )}
                           </div>
                         </div>

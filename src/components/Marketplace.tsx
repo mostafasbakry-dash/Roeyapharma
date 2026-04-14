@@ -68,7 +68,7 @@ export const Marketplace = () => {
 
       const { data, error: fetchError } = await supabase
         .from(table)
-        .select('*, pharmacies(pharmacy_id, pharmacy_name, phone, city, address, telegram)')
+        .select('*, pharmacies(pharmacy_id, pharmacy_name, phone, governorate, city, address, telegram)')
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -354,7 +354,9 @@ export const Marketplace = () => {
                   </h3>
                   <p className="text-xs md:text-sm text-slate-500 flex items-center gap-1">
                     <MapPin size={14} />
-                    {selectedItem.pharmacies?.city || selectedItem.city || t('unknown_location')}, {t('egypt')}
+                    {selectedItem.pharmacies?.governorate && selectedItem.pharmacies?.city 
+                      ? `${selectedItem.pharmacies.governorate} - ${selectedItem.pharmacies.city}`
+                      : selectedItem.pharmacies?.city || selectedItem.city || t('unknown_location')}, {t('egypt')}
                   </p>
                 </div>
               </div>

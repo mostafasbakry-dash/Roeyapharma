@@ -41,6 +41,7 @@ interface Pharmacy {
   pharmacy_id: string;
   pharmacy_name: string;
   phone: string;
+  governorate: string;
   city: string;
   address: string;
   account_status: string;
@@ -186,7 +187,7 @@ export const AdminDashboard = () => {
       try {
         const { data: pharmacyData } = await supabase
           .from('pharmacies')
-          .select('pharmacy_id, pharmacy_name, phone, city, address, account_status, status, created_at')
+          .select('pharmacy_id, pharmacy_name, phone, governorate, city, address, account_status, status, created_at')
           .order('created_at', { ascending: false });
         setPharmacies(pharmacyData || []);
       } catch (e: any) {
@@ -665,7 +666,7 @@ export const AdminDashboard = () => {
                       </td>
                       <td className="p-4 text-sm text-slate-600">{pharmacy.phone}</td>
                       <td className="p-4 text-sm text-slate-600">
-                        <div>{pharmacy.city}</div>
+                        <div>{pharmacy.governorate ? `${pharmacy.governorate} - ${pharmacy.city}` : pharmacy.city}</div>
                         <div className="text-xs text-slate-400 truncate max-w-[150px]">{pharmacy.address}</div>
                       </td>
                       <td className="p-4">
